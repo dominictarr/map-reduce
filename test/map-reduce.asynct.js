@@ -1,7 +1,7 @@
 
 
 var mapR = require('../map-reduce')
-  , it = require('it-is')
+  , it = require('it-is').style('colour')
 
 exports ['map'] = function (test){
 

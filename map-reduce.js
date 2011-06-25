@@ -53,25 +53,26 @@ function map(opts){
     }
   }
   
-  function next (){
+  function next () {
     if(arguments.length)
-      emit.apply(null,arguments)
+      emit.apply(null, arguments)
 
     if(!keys.length && !finished)
       return done()
     var key = keys.shift()
     try {
-      opts.map(emit,opts.on[key],key)
+      opts.map(emit, opts.on[key],key)
     } catch (err) {
+      if(finished) throw err //we're in the final callback. don't catch the error
       error(err)
     }
   }
   
-  function done (){
+  function done () {
     if(arguments.length)
-      emit.apply(null,arguments)
+      emit.apply(null, arguments)
     finished = true;
-    opts.done(err,reduced)
+    opts.done(null, reduced)
   }
 
   emit.next = next
@@ -87,45 +88,45 @@ function map(opts){
 */
 
 exports.identity = 
-  function (emit,value,key){
-    emit(value,key); emit.next()
+  function (emit, value, key) {
+    emit(value, key); emit.next()
   }
 
 exports.collect = 
-  function (collection,value,key){
+  function (collection, value, key){
     collection = collection || []
     collection .push(value)
     return collection 
   }
 
 exports.copy = 
-  function (collection,value,key){
+  function (collection, value, key){
     collection = collection || {}
     collection[key] = value
     return collection
   }
 
 exports.first = 
-  function (collection,value,key){
+  function (collection, value, key){
     return collection === undefined ? value : collection
   }
 
 exports.min = 
-  function (min,value){
+  function (min, value){
     if(min === undefined)
       return value
     return min <= value ? min : value
   }
 
 exports.max = 
-  function (max,value){
+  function (max, value){
     if(max === undefined)
       return value
     return max > value ? max : value
   }
 
 exports.sum = 
-  function (total,value){
+  function (total, value){
     if(total === undefined)
       return value
     return total + value
