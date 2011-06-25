@@ -8,11 +8,11 @@
     "url": "git://github.com/dominictarr/map-reduce.git"
   },
   "author": "Dominic Tarr <dominic.tarr@gmail.com> (http://bit.ly/dominictarr)",
-  "main": "map-reduce.js",
+  "main": "./map-reduce.js",
   "devDependencies": {
     "it-is": "0.0.x"
   },
   "scripts": {
     "test": "meta-test test/*.js"
-  },
+  }
 }
