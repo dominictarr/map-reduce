@@ -19,8 +19,6 @@ args
       collection[key] = value
       return collection
     }
-  
-
 */
 
 
@@ -39,6 +37,21 @@ function map(opts){
     [].unshift.call(arguments,reduced)
     reduced = opts.reduce.apply(null,arguments)
   }
+  function error (err) {
+    finished = true
+    opts.done(err,reduced)
+  }
+  
+  function safe (funx) {
+    return function (){
+      var args = [].slice.call(arguments)
+      try {
+        funx.apply(this, args)
+      } catch (err) {
+        error(err)
+      }
+    }
+  }
   
   function next (){
     if(arguments.length)
@@ -47,18 +60,24 @@ function map(opts){
     if(!keys.length && !finished)
       return done()
     var key = keys.shift()
-    opts.map(emit,opts.on[key],key)
+    try {
+      opts.map(emit,opts.on[key],key)
+    } catch (err) {
+      error(err)
+    }
   }
-  
-  emit.next = next
-  emit.done = done
   
   function done (){
     if(arguments.length)
       emit.apply(null,arguments)
     finished = true;
-    opts.done(null,reduced)
+    opts.done(err,reduced)
   }
+
+  emit.next = next
+  emit.done = done
+  emit.error = error
+  emit.safe = safe
 
   next()//start
 }
