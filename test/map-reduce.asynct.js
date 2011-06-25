@@ -7,9 +7,7 @@ exports ['map'] = function (test){
 
     mapR({
       on: [1,2,3],
-      map: function (emit,value){
-        emit.next(value)
-      },
+      map: mapR.identity,
       reduce: function (col,value){
         col = col || []
         col.push(value)

@@ -51,7 +51,7 @@ exports ['throw Error async'] = function (test){
   }
 }
 
-exports ['dont catch callback'] = function (test){
+exports ['dont catch in callback'] = function (test){
   var err = new Error('this is the example error')
     , ended = 0
   it(function (){
@@ -61,7 +61,6 @@ exports ['dont catch callback'] = function (test){
       map: function (emit, val) { emit.next(val) },
       done: function check(e,results){
         ended ++
-        console.log('**********************8')
         throw err
       }
     })

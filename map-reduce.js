@@ -86,7 +86,7 @@ function map(opts){
 /*
   helper functions
 */
-
+exports.id =
 exports.identity = 
   function (emit, value, key) {
     emit(value, key); emit.next()
