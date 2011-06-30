@@ -1,6 +1,6 @@
 
 
-var mapR = require('../map-reduce')
+var mapR = require('map-reduce')
   , it = require('it-is').style('colour')
 
 exports ['map'] = function (test){
@@ -29,6 +29,25 @@ exports ['map default to identity'] = function (test){
       on: [1,2,3],
       reduce: function (col,value){
         col = col || []
+        col.push(value)
+        return col
+      },
+      done: check
+    })
+  
+  function check(err,results){
+    it(results).deepEqual([1,2,3])
+
+    test.done()
+  }
+}
+
+exports ['map default to identity with initial set'] = function (test){
+
+    mapR({
+      on: [1,2,3],
+      initial: [],
+      reduce: function (col,value){
         col.push(value)
         return col
       },

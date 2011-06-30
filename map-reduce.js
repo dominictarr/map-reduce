@@ -28,7 +28,7 @@ function map(opts){
 
   var keys = Object.keys(opts.on)
   var finished = false
-  var reduced = opts.init
+  var reduced = opts.init ||opts.initial
 
   opts.map = opts.map || exports.identity
   opts.reduce = opts.reduce || exports.collect
