@@ -34,3 +34,16 @@ reduce will be called with a `collection` which is either,
   3. undefined
   
 the other arguments are the values you called emit with.
+
+##TODO: traverse, heuristic, prune
+
+expand this module to traverse graphs by adding a `emit.traverse`
+
+calling `emit.traverse(obj)` will add obj to the queue of objects being mapped. 
+depending on some configuration this could be used to perform both depth-first, 
+and width-first traversals, and with a `heuristic` function, A* could be implemented.
+
+##TODO: support async function as value for on:
+
+for large mappings it will be necessary to partition and parallelize, 
+will need to think up an effective way to partition the source.
