@@ -1,18 +1,23 @@
 {
   "name": "map-reduce",
   "description": "async NoSql like map reduce function inside node.",
-  "version": "0.2.2",
+  "version": "1.0.0",
   "homepage": "https://github.com/dominictarr/map-reduce",
   "repository": {
     "type": "git",
     "url": "git://github.com/dominictarr/map-reduce.git"
   },
   "author": "Dominic Tarr <dominic.tarr@gmail.com> (http://bit.ly/dominictarr)",
-  "main": "./map-reduce.js",
+  "main": "./index.js",
   "devDependencies": {
-    "it-is": "0.0.x"
+  },
+  "dependencies": {
+    "levelup" : "~0.2.1",
+    "through" : "~1.1.1",
+    "from"    : "~0.0.2"
   },
   "scripts": {
-    "test": "meta-test test/*.js"
+    "test": "set -e; for t in test/*.js; do node $t; done"
   }
 }
+
