@@ -1,5 +1,6 @@
 
 var levelup = require('levelup')
+var rimraf = require("rimraf")
 
 if(!module.parent) {
 
@@ -22,24 +23,30 @@ if(!module.parent) {
 module.exports = sum
 
 function sum(db, callback) {
-    levelup(db, { createIfMissing: true }, function (err, db) {
+    rimraf(db, function (err) {
         if (err) {
             return callback(err)
         }
 
-        var stream = db.writeStream()
+        levelup(db, { createIfMissing: true }, function (err, db) {
+            if (err) {
+                return callback(err)
+            }
 
-        for(var i = 0; i < 1000; i++) {
-            stream.write({
-                key: JSON.stringify(i)
-                , value: JSON.stringify(i)
+            var stream = db.writeStream()
+
+            for(var i = 0; i < 1000; i++) {
+                stream.write({
+                    key: JSON.stringify(i)
+                    , value: JSON.stringify(i)
+                })
+            }
+
+            stream.end()
+
+            stream.on("close", function () {
+                callback(null)
             })
-        }
-
-        stream.end()
-
-        stream.on("close", function () {
-            callback(null)
         })
     })
 }
