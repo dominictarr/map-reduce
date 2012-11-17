@@ -13,7 +13,7 @@ if(!module.parent) {
       }, function () {
         this.queue(null)
       }))
-      .pipe(process.stderr, {end: false})
+      .pipe(process.stdout, {end: false})
 
   })
   
