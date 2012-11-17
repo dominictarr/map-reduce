@@ -33,3 +33,24 @@ sum('/tmp/map-reduce-sum-test', function (err) {
     assert.equal(JSON.parse(sum), ( 10000 * 10001 ) / 2)
   })
 })
+
+sum('/tmp/map-reduce-sum-test-range', function (err) {
+  if (err) {
+      throw err
+  }
+
+  var mr = MR({
+    path: '/tmp/map-reduce-sum-test-range',
+    start: '0'
+    , end: '9'
+    , reduce: parsed(function (a, b) {
+      return a + b
+    })
+    , initial: 0
+  })
+
+  mr.on('reduce', function (sum) {
+    console.log('range', sum)
+    assert.equal(JSON.parse(sum), (9000 * 9001) / 2 + 10000)
+  })
+})
