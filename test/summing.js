@@ -17,6 +17,7 @@ test("sum", function (t) {
         var stream = db.query("sum", {
             start: "0"
             , end: "9"
+            , initial: 0
         })
 
         // wait for data to be reduced
