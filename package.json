@@ -11,12 +11,12 @@
   "dependencies": {
     "levelup": "~0.2.1",
     "through": "~1.1.1",
-    "from": "~0.0.2",
+    "from": "~0.0.2"
   },
   "devDependencies": {
     "rimraf": "~2.0.2",
     "write-stream": "~0.4.3",
-    "pad": "0.0.3"
+    "pad": "0.0.3",
     "tap": "~0.3.2"
   },
   "scripts": {
