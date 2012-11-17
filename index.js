@@ -41,76 +41,46 @@ module.exports = function (opts) {
   })
 
   var initial = opts.initial
+  var queue = liveQueue(doReduce, 200)
 
-  emitter.readStream = function (opts) {
-    //if opts.group is an array, use it to set start, end
+  function group(key) {
+    var start = key.slice()
+    var end   = key.slice()
+    start.push('')
+    end.push('~')
+    return {start: sk(start), end: sk(end)}
+  }
 
-    //abstract this out
+  function doReduce (key) {
+    console.log('DO REDUCE', key)
+    if(!Array.isArray(key))
+      key = JSON.parse(key)
+    var collection = initial
 
-    var start, end
-    if(Array.isArray(opts.group)) {
+    var values = []
+    
+    db.readStream(group(key) /*{start: sk(start), end: sk(end)}*/)
+      .pipe(through(function (data) {
+        collection = reduce(collection, data.value, data.key)
+      }, function () {
+        //save the collection
+        emitter.emit('reduce', key.slice(1),collection)
 
-      //okay, so this is one way to do it.
-      //prehaps you just want the group? not the 
+        key[0] = key[0] - 1
+        db.put(sk(key), collection)
+        if(key[0] <= 0) return
 
-      start = opts.group.slice()
-      start.unshift(start.length + 1)
-      start.push('')
-      start = sk(start)
+        key.pop()
+        queue(key)
 
-      end = opts.group.slice()
-      end.unshift(end.length + 1)
-      end.push('~')
-      end = sk(end)
-
-    } else {
-      start = ''; end = '~'
-    }
-
-    //abstract this out
-    if(db)
-      return db.readStream({start: start, end: end})
-    var t = through ()
-    emitter.once('load', function (db) {
-      db.readStream({start: start, end: end}).pipe(t)
-    })
-    return t
+      }))
   }
 
   levelup(opts.path, {}, function (err, db) {
     emitter.emit('load', db)
-    
+
     var maps = {}
-    var queue = liveQueue(doReduce, 200)
-
-    function doReduce (key) {
-      console.log('DO REDUCE', key)
-      if(!Array.isArray(key))
-        key = JSON.parse(key)
-      var collection = initial
-      var start = key.slice()
-      var end   = key.slice()
-      start.push('')
-      end.push('~')
-
-      var values = []
-      db.readStream({start: sk(start), end: sk(end)})
-        .pipe(through(function (data) {
-          collection = reduce(collection, data.value, data.key)
-        }, function () {
-          //save the collection
-          emitter.emit('reduce', key.slice(1),collection)
-
-          key[0] = key[0] - 1
-          db.put(sk(key), collection)
-          if(key[0] <= 0) return
-
-          key.pop()
-          queue(key)
-
-        }))
-    }
-
+    
     db.readStream({start: '', end: "~"})
       .pipe(through(function (data) {
         var keys = []
@@ -169,5 +139,47 @@ module.exports = function (opts) {
         })
       }))
   })
+
+  //read the results of a map-reduce
+  emitter.readStream = function (opts) {
+    //if opts.group is an array, use it to set start, end
+
+    //abstract this out
+
+    if(Array.isArray(opts.group)) {
+
+      //okay, so this is one way to do it.
+      //prehaps you just want the group? not the 
+      opts.group.unshift(opts.group.length + 1)
+      var _opts = group(opts.group)
+      opts.start = _opts.start
+      opts.end = _opts.end
+      /*
+      start = opts.group.slice()
+      start.unshift(start.length + 1)
+      start.push('')
+      start = sk(start)
+
+      end = opts.group.slice()
+      end.unshift(end.length + 1)
+      end.push('~')
+      end = sk(end)
+      */
+    } else {
+      opts.start = ''; opts.end = '~'
+    }
+
+    console.log(opts)
+
+    //abstract this out
+    if(db)
+      return db.readStream(opts)
+    var t = through ()
+    emitter.once('load', function (db) {
+      db.readStream(opts).pipe(t)
+    })
+    return t
+  }
+
   return emitter
 }
