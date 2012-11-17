@@ -52,14 +52,13 @@ module.exports = function (opts) {
   }
 
   function doReduce (key) {
-    console.log('DO REDUCE', key)
     if(!Array.isArray(key))
       key = JSON.parse(key)
     var collection = initial
 
     var values = []
     
-    db.readStream(group(key) /*{start: sk(start), end: sk(end)}*/)
+    db.readStream(group(key))
       .pipe(through(function (data) {
         collection = reduce(collection, data.value, data.key)
       }, function () {
@@ -70,75 +69,70 @@ module.exports = function (opts) {
         db.put(sk(key), collection)
         if(key[0] <= 0) return
 
+        //queue the larger group to be reduced.
         key.pop()
         queue(key)
-
       }))
   }
 
-  levelup(opts.path, {}, function (err, db) {
-    emitter.emit('load', db)
-
-    var maps = {}
-    
-    db.readStream({start: '', end: "~"})
-      .pipe(through(function (data) {
-        var keys = []
-        var sync = true
-        var self = this
-
-        //need to replace the two queues with just one queue.
-        //an async queue, where it delays the execution of the reduce,
-        //until it's actually needed.
-
-        function queueK (key, id) {
-          if(!Array.isArray(key)) key = [key]
-          
-          key.unshift(key.length + 1)
-          queue(key)
-          key.push(id)
-          return sk(key)
-        }
-
-        //store the doc key -> mapped keys,
-        //so that if the doc is updated,
-        //and emits different keys
-        //then we can remove the old maps.
-
-        db.get('~MAPKEYS~'+data.key, function (err, oldKeys) {
-          oldKeys = oldKeys ? JSON.parse(oldKeys) : []
-
-          var maps = []
-          function emit (key, value) {
-            if(!sync) throw new Error('emit called asynchronously')
-            if(!~keys.indexOf(key)) {
-              keys.push(key)
-
-              maps.push({
-                type: 'put', 
-                //also, queue the next reduce.
-                key: queueK(key, data.key), 
-                value: value
-              })
-            }
-          }
-
-          emit.emit = emit
-
-          map.call(emit, data.key, data.value, emit)
-
-          //setting this will make emit throw if it is called again later.
-          sync = false
-
-          oldKeys.forEach(function (_key) {
-            if(!~keys.indexOf(_key))
-              map.unshift({type: 'del', key: _key})
+  function doMap (data) {
+    var keys = [], sync = true, self = this
+    //change the string key into a group key.
+    function queueK (key, id) {
+      if(!Array.isArray(key)) key = [key]
+      
+      key.unshift(key.length + 1)
+      queue(key)
+      key.push(id)
+      return sk(key)
+    }
+    //store the doc key -> mapped keys,
+    //so that if the doc is updated,
+    //and emits different keys
+    //then we can remove the old maps.
+    db.get('~MAPKEYS~'+data.key, function (err, oldKeys) {
+      oldKeys = oldKeys ? JSON.parse(oldKeys) : []
+      var maps = []
+      function emit (key, value) {
+        if(!sync) throw new Error('emit called asynchronously')
+        if(!~keys.indexOf(key)) {
+          keys.push(key)
+          maps.push({
+            type: 'put', 
+            //also, queue the next reduce.
+            key: queueK(key, data.key), 
+            value: value
           })
-          //save the maps.
-          db.batch(maps)
-        })
-      }))
-  })
+        }
+      }
+      emit.emit = emit
+      map.call(emit, data.key, data.value, emit)
+      //setting this will make emit throw if it is called again later.
+      sync = false
+      oldKeys.forEach(function (_key) {
+        if(!~keys.indexOf(_key))
+          map.unshift({type: 'del', key: _key})
+      })
+      //save the maps.
+      db.batch(maps)
+    })
+  }
+
+  emitter.force = function () {
+
+    levelup(opts.path, {}, function (err, db) {
+      if(err) return emitter.emit('error', err)
+      emitter.emit('load', db)
+
+      var maps = {}
+    
+      //force the map-reduce to run.
+      db.readStream({start: '', end: "~"})
+        .pipe(through(doMap))
+    })
+  
+    return emitter
+  }
 
   //read the results of a map-reduce
   emitter.readStream = function (opts) {
@@ -147,31 +141,15 @@ module.exports = function (opts) {
     //abstract this out
 
     if(Array.isArray(opts.group)) {
-
-      //okay, so this is one way to do it.
-      //prehaps you just want the group? not the 
       opts.group.unshift(opts.group.length + 1)
       var _opts = group(opts.group)
       opts.start = _opts.start
       opts.end = _opts.end
-      /*
-      start = opts.group.slice()
-      start.unshift(start.length + 1)
-      start.push('')
-      start = sk(start)
-
-      end = opts.group.slice()
-      end.unshift(end.length + 1)
-      end.push('~')
-      end = sk(end)
-      */
     } else {
       opts.start = ''; opts.end = '~'
     }
 
-    console.log(opts)
-
-    //abstract this out
+    //abstract this out, and provide access to the other levelup streams.
     if(db)
       return db.readStream(opts)
     var t = through ()
