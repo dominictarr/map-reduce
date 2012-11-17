@@ -12,18 +12,19 @@ function sk (ary) {
 
 function liveQueue(work, delay, eventual) {
   var todo = {}
+  delay = delay || 500
   return function queue(key) {
-    //delay each task until a key has stopped updating,
-    //for DELAY ms.
-    key = JSON.parse(JSON.stringify(key))
+
+    var jsonKey = JSON.stringify(key)
+
     //TODO:
     //if the task has not run within EVENTUAL ms, just run it anyway.
-    var jskey = JSON.stringify(key)
-    var task = todo[jskey]
-    clearInterval(task)
-    todo[jskey] = task = setInterval(function () {
-      console.log('DO WORK', key)
-      work(key)
+
+    //delay each task until a key has stopped updating,
+    //for DELAY ms.
+    clearTimeout(todo[jsonKey])
+    todo[jsonKey] = setTimeout(function () {
+      work(JSON.parse(jsonKey))
     }, delay)
   }
 }
@@ -79,10 +80,11 @@ module.exports = function (opts) {
   levelup(opts.path, {}, function (err, db) {
     emitter.emit('load', db)
     
-    var maps = {}, keyQueue = {}
+    var maps = {}
     var queue = liveQueue(doReduce, 200)
 
     function doReduce (key) {
+      console.log('DO REDUCE', key)
       if(!Array.isArray(key))
         key = JSON.parse(key)
       var collection = initial
@@ -104,10 +106,7 @@ module.exports = function (opts) {
           if(key[0] <= 0) return
 
           key.pop()
-//          queue(key)
-          setTimeout(function () {
-            doReduce(key)
-          },200)
+          queue(key)
 
         }))
     }
@@ -118,19 +117,23 @@ module.exports = function (opts) {
         var sync = true
         var self = this
 
-
         //need to replace the two queues with just one queue.
         //an async queue, where it delays the execution of the reduce,
         //until it's actually needed.
 
-        function queue (key, id) {
+        function queueK (key, id) {
           if(!Array.isArray(key)) key = [key]
           
           key.unshift(key.length + 1)
-          keyQueue[JSON.stringify(key)] = true
+          queue(key)
           key.push(id)
           return sk(key)
         }
+
+        //store the doc key -> mapped keys,
+        //so that if the doc is updated,
+        //and emits different keys
+        //then we can remove the old maps.
 
         db.get('~MAPKEYS~'+data.key, function (err, oldKeys) {
           oldKeys = oldKeys ? JSON.parse(oldKeys) : []
@@ -140,8 +143,13 @@ module.exports = function (opts) {
             if(!sync) throw new Error('emit called asynchronously')
             if(!~keys.indexOf(key)) {
               keys.push(key)
-              queue(key, data.key)
-              maps.push({type: 'put', key: queue(key, data.key), value: value})
+
+              maps.push({
+                type: 'put', 
+                //also, queue the next reduce.
+                key: queueK(key, data.key), 
+                value: value
+              })
             }
           }
 
@@ -156,17 +164,9 @@ module.exports = function (opts) {
             if(!~keys.indexOf(_key))
               map.unshift({type: 'del', key: _key})
           })
-
-          //also, queue 
           //save the maps.
           db.batch(maps)
         })
-      }, function () {
-        this.queue(null)
-
-        Object.keys(keyQueue)  
-          .map(doReduce)
-
       }))
   })
   return emitter
