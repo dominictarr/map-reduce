@@ -15,11 +15,15 @@ function map (data, emit) {
   company.contacts.forEach(function (contact) {
 //    emit(contact.last+', '+contact.first, id)
 //    emit([contact.last, contact.first], id)
+    // Emit name and company the person works for
     emit([contact.first, contact.last], JSON.stringify([id]))
   })
 }
 
 //merge sets.
+// big is the list of already reduced values.
+// little is the list of values that are being reduced for
+// the first time
 function reduce (big, little) {
   function prep(ary) {
     var ary = JSON.parse(ary)
@@ -34,6 +38,7 @@ function reduce (big, little) {
       big.push(item)
   })
   big.sort()
+  // return list of all companies I work for
   return JSON.stringify(big)
 }
 
@@ -43,10 +48,14 @@ levelup('/tmp/reducer-testdb', function (err, db) {
 
   function sk (key) {
     if(!Array.isArray(key)) key = [key]
+    // prefix with length to be able to query for results
+    // that are grouped at 2 or 3 deep granularity
     key = key.length + '~' + JSON.stringify(key)
     return key
   }
 
+  // Read everything BEFORE ~. We store reduced data at ~ and
+  // after
   db.readStream({end: '~', start: ''})
   .pipe(through(function (data) {
     //get any previous mapping for this object,
@@ -78,13 +87,13 @@ levelup('/tmp/reducer-testdb', function (err, db) {
         {type: 'put', key:'~map~~'+k, value: JSON.stringify(keys.sort())}
       ]
 
-      //if a key was in old, but now keys, delete that map.
+      //if a key was in old, but now not in keys, delete that map.
       old.forEach(function (key) {
         if(!~keys.indexOf(key)) {
           bulk.push({type: 'del', key: '~map~'+key+'~'+k})
         }
       })
-      
+
       maps.forEach(function (m) {
         if(!~queue.indexOf(m.key))
           queue.push(m.key)
@@ -107,7 +116,7 @@ levelup('/tmp/reducer-testdb', function (err, db) {
       //clearly map each doc to hash(key), hash(value)
       //then, keys are evenly distributed, so it's easy to group by.
       //hmm, maybe just group by the letters in the key?
-      //so, we sort by 
+      //so, we sort by
 
       //[16, 256, all...]
 
@@ -146,6 +155,6 @@ levelup('/tmp/reducer-testdb', function (err, db) {
         }, function () {
           console.log('COLLECTION', ary[0], collection)
         }))
-    }))    
+    }))
   })
 })
