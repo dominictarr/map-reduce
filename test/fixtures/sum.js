@@ -35,7 +35,7 @@ function sum(db, callback) {
 
             var stream = db.writeStream()
 
-            for(var i = 0; i < 1000; i++) {
+            for(var i = 0; i <= 10000; i++) {
                 stream.write({
                     key: JSON.stringify(i)
                     , value: JSON.stringify(i)
