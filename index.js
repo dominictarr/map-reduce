@@ -36,8 +36,16 @@ module.exports = function (opts) {
   var reduce = opts.reduce
   var db
 
-  emitter.on('load', function (_db) {
+  emitter.on('open', function (_db) {
     db = _db
+    db.on('put', function (key, value) {
+      console.log('PUT', key.toString(), value.toString())
+      if(key < '~')
+        doMap({key: key, value: value})
+    })
+    db.on('del', function (key) {
+      //NOT IMPLEMENTED YET!
+    })
   })
 
   var initial = opts.initial
@@ -68,6 +76,7 @@ module.exports = function (opts) {
         key[0] = key[0] - 1
         //TODO: when queuing, write a queue message to the DB.
         //do it in a batch with the main update.
+        //leveldb is optomized for batch updates, so this will be fast.
         db.put(sk(key), collection, function () {
           if(key[0] <= 0) return
 
@@ -86,7 +95,7 @@ module.exports = function (opts) {
       
       key.unshift(key.length + 1)
       queue(key)
-      key.push(id)
+      key.push(id.toString())
       return sk(key)
     }
     //store the doc key -> mapped keys,
@@ -121,18 +130,25 @@ module.exports = function (opts) {
     })
   }
 
-  emitter.force = function () {
+  //open the db
+  levelup(opts.path, opts, function (err, _db) {
+    db = _db
+    if(err) return emitter.emit('error', err)
+    emitter.emit('open', db)
+  })
 
-    levelup(opts.path, {}, function (err, db) {
-      if(err) return emitter.emit('error', err)
-      emitter.emit('load', db)
+  emitter.force = function () {
+    if(db) ready() 
+    else   emitter.once('open', ready)
+
+    function ready () {
 
       var maps = {}
     
       //force the map-reduce to run.
       db.readStream({start: '', end: "~"})
         .pipe(through(doMap))
-    })
+    }
   
     return emitter
   }
