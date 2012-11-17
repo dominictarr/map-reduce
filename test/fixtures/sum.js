@@ -1,5 +1,6 @@
 
 var levelup = require('levelup')
+var rimraf  = require('rimraf')
 
 if(!module.parent) {
 
@@ -9,7 +10,7 @@ if(!module.parent) {
 
     levelup(dir, {createIfMissing: true}, function (err, db) {
 
-    var l = 10e3, i = 1
+    var l = 10e3, i = 0
     var stream = db.writeStream()
       while(l--)
         stream.write({key: JSON.stringify(i++), value: JSON.stringify(i)})
