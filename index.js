@@ -66,12 +66,15 @@ module.exports = function (opts) {
         emitter.emit('reduce', key.slice(1),collection)
 
         key[0] = key[0] - 1
-        db.put(sk(key), collection)
-        if(key[0] <= 0) return
+        //TODO: when queuing, write a queue message to the DB.
+        //do it in a batch with the main update.
+        db.put(sk(key), collection, function () {
+          if(key[0] <= 0) return
 
-        //queue the larger group to be reduced.
-        key.pop()
-        queue(key)
+          //queue the larger group to be reduced.
+          key.pop()
+          queue(key)
+        })
       }))
   }
 
