@@ -13,7 +13,10 @@ module.exports = function (opts) {
 
   levelup(opts.path, {}, function (err, db) {
 
-    db.readStream()
+    db.readStream({
+      'start': opts.start
+      , 'end': opts.end
+    })
       .pipe(through(function (data) {
         collection = reduce(collection || initial, data.value)
         this.queue(collection)
