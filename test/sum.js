@@ -18,22 +18,23 @@ function parsed (fun) {
 var mr = MR({
   path: '/tmp/map-reduce-sum-test',
   map: function (key, value) {
-    value = JSON.parse(value)
-    this.emit(value % 2 ? 'odd' : 'even', JSON.stringify(value))
+    //value = JSON.parse(value)
+    this.emit(value % 2 ? 'odd' : 'even', value)
   },
   reduce: function (big, little, key) {
     return JSON.stringify(JSON.parse(big) + JSON.parse(little))
   },
   initial: 0
-})
+}).force()
 
 mr.on('reduce', function (key, sum) {
   console.log("REDUCE", key, sum)
   if(key.length == 0) {
     assert.equal(JSON.parse(sum), ( 1000 * 1001 ) / 2)
     console.log('passed')
-  }
 
-  //mr.readStream({group: ['even']})
-    //.pipe(through(console.log))
+    
+    //mr.readStream({group: ['even']})
+      //.pipe(through(console.log))
+  }
 })
