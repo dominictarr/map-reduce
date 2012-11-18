@@ -15,28 +15,6 @@ function bufferToString(b) {
   return Buffer.isBuffer(b) ? b.toString() : b    
 }
 
-/*
-function liveQueue(work, delay, eventual) {
-  var todo = {}
-  delay = delay || 500
-  return function queue(key) {
-
-    var jsonKey = JSON.stringify(key)
-
-    //TODO:
-    //if the task has not run within EVENTUAL ms, just run it anyway.
-
-    //delay each task until a key has stopped updating,
-    //for DELAY ms.
-    clearTimeout(todo[jsonKey])
-    todo[jsonKey] = setTimeout(function () {
-      work(JSON.parse(jsonKey), function () {
-        console.log('<<', jsonKey)
-      })
-    }, delay)
-  }
-}
-*/
 
 module.exports = function (opts) {
 
@@ -60,8 +38,8 @@ module.exports = function (opts) {
       db.on('del', function (key) {
         //NOT IMPLEMENTED YET!
       })
-      emitter.emit('ready')
-      db.emit('ready')
+      emitter.emit('ready', db)
+      db.emit('ready', db)
     })
   }
 
