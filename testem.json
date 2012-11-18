@@ -1,0 +1,13 @@
+{
+    "launchers": {
+        "tap": {
+            "command": "npm test"
+        }
+    }
+    , "src_files": [
+        "./**/*.js"
+    ]
+    , "launch_in_dev": [
+        "tap"
+    ]
+}
