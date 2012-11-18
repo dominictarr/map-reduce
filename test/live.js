@@ -1,5 +1,4 @@
 var MR      = require('..')
-var levelup = require('levelup')
 var assert  = require('assert')
 var through = require('through')
 var rimraf  = require('rimraf')
