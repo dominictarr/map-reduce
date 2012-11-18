@@ -71,7 +71,6 @@ module.exports = function (opts) {
   var initial = opts.initial
   var reducers = {}, rTimeout
   function work (job, done) {
-    console.log('REDUCE', job)
     var jsonKey = JSON.stringify(job.key)
     if(job.map) {
       db.get(job.key, function (err, doc) {
