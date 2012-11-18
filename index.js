@@ -1,6 +1,7 @@
 var EventEmitter = require('events').EventEmitter
 var through = require('through')
 var levelup = require('levelup')
+var queuer  = require('./queue')
 
 function sk (ary) {
   if(!Array.isArray(ary))
@@ -40,18 +41,27 @@ module.exports = function (opts) {
   var emitter = new EventEmitter()
   var map = opts.map || function (key, value, emit) {emit(key, value)}
   var reduce = opts.reduce
-  var db = opts.db
+  var db // = opts.db
+  
+  var queue
 
   function ready (_db) {
-    db = _db
-    db.on('put', function (key, value) {
-      console.log('PUT', key.toString(), value.toString())
-      if(key < '~')
-        queue({map:1, key:bufferToString(key)})
-      //doMap({key: key, value: value})
-    })
-    db.on('del', function (key) {
-      //NOT IMPLEMENTED YET!
+    console.log('QUEUE START')
+    queuer(db, '~QUEUE')
+    db.on('queue:ready', function (queue) {
+      db = _db
+      db.on('put', function (key, value) {
+        console.log('PUT', key.toString(), value.toString())
+        if(key < '~')
+          queue({map:1, key:bufferToString(key)})
+        //doMap({key: key, value: value})
+      })
+      db.on('del', function (key) {
+        //NOT IMPLEMENTED YET!
+      })
+      console.log('READY !!!')
+      emitter.emit('ready')
+      db.emit('ready')
     })
   }
 
@@ -60,9 +70,6 @@ module.exports = function (opts) {
 
   var initial = opts.initial
   var queue = liveQueue(function (job, done) {
-    console.log('!!!!!!!!!!!!!!!!!!!!!!')
-    console.log(job)
-    console.log('!!!!!!!!!!!!!!!!!!!!!!')
     if(job.map) {
       db.get(job.key, function (err, doc) {
         doMap({key: job.key, value: doc}, done)
@@ -161,10 +168,10 @@ module.exports = function (opts) {
 
   emitter.force = function () {
     if(db) ready()
-    else   emitter.once('open', ready)
+    else   emitter.once('ready', ready)
 
     function ready () {
-
+      console.log('FORCE')
       var maps = {}
 
       //force the map-reduce to run.
