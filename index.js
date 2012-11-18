@@ -146,7 +146,7 @@ module.exports = function (opts) {
       var maps = {}
 
       //force the map-reduce to run.
-      db.readStream({start: '', end: "~"})
+      db.readStream(opts)
         .pipe(through(doMap))
     }
 
