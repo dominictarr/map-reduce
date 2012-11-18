@@ -4,29 +4,15 @@ LevelUp Queue.
 
 var through = require('through')
 
-function has(ary, item) {
-  return ~ary.indexOf(item)
-}
-
-function add (ary, item) {
-  if(!has(ary, item))
-    return ary.push(item), true
-  return false
-}
-
-function rm (ary, item) {
-  var i = ary.indexOf(item)
-  if(!~i) return false
-  ary.splice(i, 1)
-  return true
-}
-
 module.exports = function (db, prefix, work, ready) {
-  var jobs = [], active = {}, i = 0, batch = []
+  var jobs = [], active = {}, I = 0, batch = []
+
+  if(work)
+    db.on('queue:start', work)
+
   /**
   on start up, read any unfinished jobs from database 
   (incase there was a crash)
-
 
   cleanup any duplicates, 
   (possible if a delete fails and that job is requeued concurrently)
@@ -34,55 +20,37 @@ module.exports = function (db, prefix, work, ready) {
   then start the jobs.
   **/
 
-  db.readStream({start: prefix, end: prefix+'~', reverse: true})
+  db.readStream({start: prefix , end: prefix+'~~'})
     .pipe(through(function (data) {
-      var key = data.value.toString()
-      if(!add(jobs, key)) //this job is already active!
-        batch.push({type: 'del', key: data.key})
-      
-      var j = data.key.toString().split('~').pop()
-      if(!isNaN(j))
-        i = active[key] = Math.max(i, j)
+      var key = ''+data.value
+      var i   = (''+data.key).split('~').pop()
+      db.emit('queue:recover', key)
+      start(key, i)
+      I = Math.max(I, i)
     }, function () {
-      function startAll() {
-        jobs.forEach(start)
-      }
-      //delete any duplicate jobs, and then start all jobs.
-      if(batch.length) db.batch(batch, startAll)
-      else                             startAll()
-
-      ready(null, queue)
+      db.queue = queue
+      db.emit('queue:ready', queue)
+      if(ready) ready(queue)      
     }))
 
-  function toKey(key) {
-    var k = [prefix, key, active[key].toString()].join('~')
+  function toKey(key, i) {
+    var k = [prefix, key, i.toString()].join('~')
     return k
   }
 
-  function start (key) {
-    work(key, function () {
-      rm(jobs, key)
-      db.del(toKey(key))
-      delete active[key]
+  function start (key, i) {
+    db.emit('queue:start', key, function () {
+      db.del(toKey(key, i), function () {
+        db.emit('queue:done', key)
+      })
     })
   }
 
   /**
-  add way to insert jobs within a batch insert.
-  important, because then jobs that relate to other PUTs
-  will be created atomically. Either there will be a PUT and a job,
-  or both will fail.
+    pass array of keys + batch to associate jobs with a batch insert.
+    this will mean that if the PUT can't be done without scheduling the jobs.
 
-  hang on... if a job is running, and then the job comes in again,
-  do you want to restart the job?
-
-  maybe... that should be up to the user.
-  emit an event to show that the job has occured again.
-
-  do I want to limit a job to only running once? 
-  or is it better to restart a job?
-
-  hmm, I think that is more correct...
+    (even if the process crashes immediately after)
   **/
 
   function queue (key, batch) {
@@ -90,24 +58,19 @@ module.exports = function (db, prefix, work, ready) {
     batch = batch || []
     var toStart = []
 
-    keys.forEach(function (k) { 
-      if(add(jobs, key)) {
-        active[key] = ++i
-        toStart.push(key)
-        //if the process crashes while 
-        batch.push({type: 'put', key: toKey(key), value: key})
-      } else {
-        console.log('active', key)
-        //emitter.emit('job', key) //?
-      }
+    keys.forEach(function (key) { 
+      toStart.push({key: key, i: ++I})
+      batch.push({type: 'put', key: toKey(key, I), value: key})
     })
 
     if(batch.length)
       db.batch(batch, function (err) {
-        if(err) throw err //?
-        toStart.forEach(start)
+        if(err) throw err //? is this the right thing to do here?
+        toStart.forEach(function (a) {
+          start(a.key, a.i)
+        })
       })
   }
 
-  return queue
+  return db
 }
