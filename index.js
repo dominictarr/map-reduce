@@ -10,6 +10,10 @@ function sk (ary) {
   return '~MAPR~'+JSON.stringify(ary)
 }
 
+function bufferToString(b) {
+  return Buffer.isBuffer(b) ? b.toString() : b    
+}
+
 function liveQueue(work, delay, eventual) {
   var todo = {}
   delay = delay || 500
@@ -24,7 +28,9 @@ function liveQueue(work, delay, eventual) {
     //for DELAY ms.
     clearTimeout(todo[jsonKey])
     todo[jsonKey] = setTimeout(function () {
-      work(JSON.parse(jsonKey))
+      work(JSON.parse(jsonKey), function () {
+        console.log('<<', jsonKey)
+      })
     }, delay)
   }
 }
@@ -34,22 +40,36 @@ module.exports = function (opts) {
   var emitter = new EventEmitter()
   var map = opts.map || function (key, value, emit) {emit(key, value)}
   var reduce = opts.reduce
-  var db
+  var db = opts.db
 
-  emitter.on('open', function (_db) {
+  function ready (_db) {
     db = _db
     db.on('put', function (key, value) {
       console.log('PUT', key.toString(), value.toString())
       if(key < '~')
-        doMap({key: key, value: value})
+        queue({map:1, key:bufferToString(key)})
+      //doMap({key: key, value: value})
     })
     db.on('del', function (key) {
       //NOT IMPLEMENTED YET!
     })
-  })
+  }
+
+  if(db) ready(db)
+  else   emitter.once('open', ready)
 
   var initial = opts.initial
-  var queue = liveQueue(doReduce, 200)
+  var queue = liveQueue(function (job, done) {
+    console.log('!!!!!!!!!!!!!!!!!!!!!!')
+    console.log(job)
+    console.log('!!!!!!!!!!!!!!!!!!!!!!')
+    if(job.map) {
+      db.get(job.key, function (err, doc) {
+        doMap({key: job.key, value: doc}, done)
+      })
+    } else
+      doReduce(job.key, done)
+  }, 200)
 
   function group(key) {
     var start = key.slice()
@@ -59,7 +79,7 @@ module.exports = function (opts) {
     return {start: sk(start), end: sk(end)}
   }
 
-  function doReduce (key) {
+  function doReduce (key, cb) {
     if(!Array.isArray(key))
       key = JSON.parse(key)
     var collection = initial
@@ -77,24 +97,25 @@ module.exports = function (opts) {
         //TODO: when queuing, write a queue message to the DB.
         //do it in a batch with the main update.
         //leveldb is optomized for batch updates, so this will be fast.
-        db.put(sk(key), collection, function () {
+        db.put(sk(key), collection, function (err) {
           if(key[0] <= 0) return
 
           //queue the larger group to be reduced.
           key.pop()
-          queue(key)
+          queue({reduce: 1, key: bufferToString(key)})
+          cb(err)
         })
       }))
   }
 
-  function doMap (data) {
+  function doMap (data, cb) {
     var keys = [], sync = true, self = this
     //change the string key into a group key.
     function queueK (key, id) {
       if(!Array.isArray(key)) key = [key]
 
       key.unshift(key.length + 1)
-      queue(key)
+      queue({reduce:1, key: bufferToString(key)})
       key.push(id.toString())
       return sk(key)
     }
@@ -126,16 +147,17 @@ module.exports = function (opts) {
           map.unshift({type: 'del', key: _key})
       })
       //save the maps.
-      db.batch(maps)
+      db.batch(maps, cb)
     })
   }
 
   //open the db
-  levelup(opts.path, opts, function (err, _db) {
-    db = _db
-    if(err) return emitter.emit('error', err)
-    emitter.emit('open', db)
-  })
+  if(!db)
+    levelup(opts.path, opts, function (err, _db) {
+      db = _db
+      if(err) return emitter.emit('error', err)
+      emitter.emit('open', db)
+    })
 
   emitter.force = function () {
     if(db) ready()
