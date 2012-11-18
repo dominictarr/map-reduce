@@ -15,6 +15,7 @@ function bufferToString(b) {
   return Buffer.isBuffer(b) ? b.toString() : b    
 }
 
+/*
 function liveQueue(work, delay, eventual) {
   var todo = {}
   delay = delay || 500
@@ -35,6 +36,7 @@ function liveQueue(work, delay, eventual) {
     }, delay)
   }
 }
+*/
 
 module.exports = function (opts) {
 
@@ -46,12 +48,11 @@ module.exports = function (opts) {
   var queue
 
   function ready (_db) {
-    console.log('QUEUE START')
-    queuer(db, '~QUEUE')
-    db.on('queue:ready', function (queue) {
+    queuer(db, '~QUEUE', work)
+    db.on('queue:ready', function (_queue) {
+      queue = _queue
       db = _db
       db.on('put', function (key, value) {
-        console.log('PUT', key.toString(), value.toString())
         if(key < '~')
           queue({map:1, key:bufferToString(key)})
         //doMap({key: key, value: value})
@@ -59,7 +60,6 @@ module.exports = function (opts) {
       db.on('del', function (key) {
         //NOT IMPLEMENTED YET!
       })
-      console.log('READY !!!')
       emitter.emit('ready')
       db.emit('ready')
     })
@@ -69,14 +69,28 @@ module.exports = function (opts) {
   else   emitter.once('open', ready)
 
   var initial = opts.initial
-  var queue = liveQueue(function (job, done) {
+  var reducers = {}, rTimeout
+  function work (job, done) {
+    console.log('REDUCE', job)
+    var jsonKey = JSON.stringify(job.key)
     if(job.map) {
       db.get(job.key, function (err, doc) {
         doMap({key: job.key, value: doc}, done)
       })
-    } else
-      doReduce(job.key, done)
-  }, 200)
+    } else {
+      function go() {
+        delete reducers[jsonKey]
+        var key = job.key
+        doReduce(key, done)
+      }
+      rTimeout = null
+      var old = reducers[jsonKey]
+      if(old) clearTimeout(old.timeout)
+      reducers[jsonKey] = {done: done, timeout: setTimeout(go, 500)}
+      //mark the old job as done.
+      if(old && 'function' === typeof old.done) old.done()
+    }
+  }
 
   function group(key) {
     var start = key.slice()
@@ -118,11 +132,12 @@ module.exports = function (opts) {
   function doMap (data, cb) {
     var keys = [], sync = true, self = this
     //change the string key into a group key.
+
     function queueK (key, id) {
       if(!Array.isArray(key)) key = [key]
-
       key.unshift(key.length + 1)
-      queue({reduce:1, key: bufferToString(key)})
+      queue({reduce:1, key: bufferToString(key.slice())})
+
       key.push(id.toString())
       return sk(key)
     }
