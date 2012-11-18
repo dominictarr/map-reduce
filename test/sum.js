@@ -5,6 +5,7 @@ var levelup = require('levelup')
 var assert  = require('assert')
 var through = require('through')
 var mac     = require('macgyver')().autoValidate()
+var pad     = require('pad')
 
 sum('/tmp/map-reduce-sum-test', function (err) {
   if (err) {

@@ -32,7 +32,7 @@ function liveQueue(work, delay, eventual) {
 module.exports = function (opts) {
 
   var emitter = new EventEmitter()
-  var map = opts.map
+  var map = opts.map || function (key, value, emit) {emit(key, value)}
   var reduce = opts.reduce
   var db
 
