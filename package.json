@@ -18,7 +18,9 @@
     "write-stream": "~0.4.3",
     "pad": "0.0.3",
     "tap": "~0.3.2",
-    "testem": "~0.2.25"
+    "testem": "~0.2.25",
+    "macgyver": "~1.9",
+    "optimist": "0.3.5"
   },
   "scripts": {
     "test": "set -e; for t in test/*.js; do node $t; done"
