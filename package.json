@@ -8,17 +8,16 @@
     "url": "git://github.com/dominictarr/map-reduce.git"
   },
   "author": "Dominic Tarr <dominic.tarr@gmail.com> (http://bit.ly/dominictarr)",
-  "devDependencies": {
-    "rimraf": "~2.0.2",
-    "write-stream": "~0.4.3",
-    "levelup": "~0.2.1",
-    "tap": "~0.3.2",
-    "optimist": "~0.3.5"
-  },
   "dependencies": {
     "levelup": "~0.2.1",
     "through": "~1.1.1",
     "from": "~0.0.2"
+  },
+  "devDependencies": {
+    "rimraf": "~2.0.2",
+    "write-stream": "~0.4.3",
+    "pad": "0.0.3",
+    "tap": "~0.3.2"
   },
   "scripts": {
     "test": "set -e; for t in test/*.js; do node $t; done"
