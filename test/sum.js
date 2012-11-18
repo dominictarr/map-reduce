@@ -5,6 +5,7 @@ var levelup = require('levelup')
 var assert  = require('assert')
 var through = require('through')
 var mac     = require('macgyver')().autoValidate()
+var pad     = require('pad')
 
 sum('/tmp/map-reduce-sum-test', function (err) {
   if (err) {
@@ -41,13 +42,13 @@ sum('/tmp/map-reduce-sum-test-range', function (err) {
 
   var mr = MR({
       path: '/tmp/map-reduce-sum-test-range'
-    , start: '0'
-    , end: '2'
+    , start: pad(6,'0','0')
+    , end: pad(6, '2', '0')
     , reduce: function (a, b) {
         return JSON.stringify(JSON.parse(a) + 1)
       }
     , initial: 0
-  })
+  }).force()
 
   mr.on('reduce', mac(function (key, sum) {
     console.log('range', sum)
