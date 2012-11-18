@@ -25,7 +25,7 @@ rimraf(dir, function () {
     initial: 0
   })
 
-  mr.on('open', function (db) {
+  mr.on('ready', function (db) {    
     db.put('A', '10')
     db.put('B', '20')
     db.put('C', '30')
@@ -43,8 +43,7 @@ rimraf(dir, function () {
     } else if(key[0] == 'vowel') 
       assert.equal(Number(sum), 60)
     else if(key[0] == 'consonant') 
-      assert.equal(Number(sum), 90)
-    
+      assert.equal(Number(sum), 90)    
   })
 
 })
