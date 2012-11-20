@@ -11,8 +11,6 @@ sum('/tmp/map-reduce-sum-test', function (err, db) {
   if(err)
     throw err
 
-  require('../use')(db)//TEMP
-
   db.use(mapR({
       name: 'sum',
       map: function (key, value) {
