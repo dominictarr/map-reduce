@@ -24,9 +24,5 @@ function gen (a) {
 }
 
 gen()
-gen()
-gen()
-gen()
-gen()
 
 console.log(groups.sort())
