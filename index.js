@@ -18,33 +18,45 @@ function bufferToString(b) {
 
 module.exports = function (opts) {
 
-  var emitter = new EventEmitter()
+  return function (db) {
+
+  var emitter = db
   var map = opts.map || function (key, value, emit) {emit(key, value)}
   var reduce = opts.reduce
   var db // = opts.db
   
-  var queue
+  //var queue
 
-  function ready (_db) {
-    queuer(db, '~QUEUE', work)
-    db.on('queue:ready', function (_queue) {
+  //;(function ready (_db) {
+
+  //  queuer(db, )
+  //if('function' !=== db.queue)
+  //  throw new Error('map-reduce requires queue levelup plugin to be used first')
+
+  //just install the queue plugin.
+  db.use(queuer('~QUEUE', work))
+
+  var queue = db.queue.bind(db)
+
+    db.on('put', function (key, value) {
+      if(key < '~')
+        queue({map:1, key:bufferToString(key)})
+      //doMap({key: key, value: value})
+    })
+    db.on('del', function (key) {
+      //NOT IMPLEMENTED YET!
+    })
+/*    db.on('queue:ready', function (_queue) {
       queue = _queue
-      db = _db
-      db.on('put', function (key, value) {
-        if(key < '~')
-          queue({map:1, key:bufferToString(key)})
-        //doMap({key: key, value: value})
-      })
-      db.on('del', function (key) {
-        //NOT IMPLEMENTED YET!
-      })
       emitter.emit('ready', db)
       db.emit('ready', db)
-    })
-  }
+    })*/
 
-  if(db) ready(db)
+//  })(db)
+
+/*  if(db) ready(db)
   else   emitter.once('open', ready)
+*/
 
   var initial = opts.initial
   var reducers = {}, rTimeout
@@ -83,6 +95,8 @@ module.exports = function (opts) {
     var collection = initial
 
     var values = []
+
+    console.log('doReduce', key)
 
     db.readStream(group(key))
       .pipe(through(function (data) {
@@ -151,30 +165,30 @@ module.exports = function (opts) {
   }
 
   //open the db
+  /*
   if(!db)
     levelup(opts.path, opts, function (err, _db) {
       db = _db
       if(err) return emitter.emit('error', err)
       emitter.emit('open', db)
     })
+  */
 
-  emitter.force = function () {
-    if(db) ready()
-    else   emitter.once('ready', ready)
+  db.startMapReduce = function (key) {
+  
+    //force the map-reduce to run.
+    db.readStream(opts)
+      .pipe(through(doMap))  
 
-    function ready () {
-      console.log('FORCE')
-      var maps = {}
+    return db
+  }
 
-      //force the map-reduce to run.
-      db.readStream(opts)
-        .pipe(through(doMap))
-    }
-
-    return emitter
+  db.viewStream = function (opts) {
+    //get a stream from a map-reduce...
   }
 
   //read the results of a map-reduce
+/*
   emitter.readStream = function (opts) {
     //if opts.group is an array, use it to set start, end
 
@@ -198,6 +212,7 @@ module.exports = function (opts) {
     })
     return t
   }
+*/
 
-  return emitter
+  }
 }
