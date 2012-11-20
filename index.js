@@ -12,7 +12,7 @@ function sk (ary) {
 }
 
 function bufferToString(b) {
-  return Buffer.isBuffer(b) ? b.toString() : b    
+  return JSON.stringify(Buffer.isBuffer(b) ? b.toString() : b)
 }
 
 
@@ -23,54 +23,23 @@ module.exports = function (opts) {
   var emitter = db
   var map = opts.map || function (key, value, emit) {emit(key, value)}
   var reduce = opts.reduce
-  var db // = opts.db
   
-  //var queue
-
-  //;(function ready (_db) {
-
-  //  queuer(db, )
-  //if('function' !=== db.queue)
-  //  throw new Error('map-reduce requires queue levelup plugin to be used first')
-
-  //just install the queue plugin.
-  db.use(queuer('~QUEUE', work))
-
-  var queue = db.queue.bind(db)
-
-    db.on('put', function (key, value) {
-      if(key < '~')
-        queue({map:1, key:bufferToString(key)})
-      //doMap({key: key, value: value})
-    })
-    db.on('del', function (key) {
-      //NOT IMPLEMENTED YET!
-    })
-/*    db.on('queue:ready', function (_queue) {
-      queue = _queue
-      emitter.emit('ready', db)
-      db.emit('ready', db)
-    })*/
-
-//  })(db)
-
-/*  if(db) ready(db)
-  else   emitter.once('open', ready)
-*/
-
-  var initial = opts.initial
-  var reducers = {}, rTimeout
-  function work (job, done) {
-    var jsonKey = JSON.stringify(job.key)
-    if(job.map) {
-      db.get(job.key, function (err, doc) {
-        doMap({key: job.key, value: doc}, done)
+  db.use(queuer({
+    map: function (job, done) {
+      job = JSON.parse(job)
+      db.get(job, function (err, doc) {
+        doMap({key: job, value: doc}, done)
       })
-    } else {
+    },
+    reduce: function (job, done) {
+      job = JSON.parse(job)
+      if('string' === typeof job)
+        throw new Error(JSON.stringify(job))
+
+      var jsonKey = JSON.stringify(job)
       function go() {
         delete reducers[jsonKey]
-        var key = job.key
-        doReduce(key, done)
+        doReduce(job, done)
       }
       rTimeout = null
       var old = reducers[jsonKey]
@@ -79,7 +48,20 @@ module.exports = function (opts) {
       //mark the old job as done.
       if(old && 'function' === typeof old.done) old.done()
     }
-  }
+  }))
+
+  var queue = db.queue.bind(db)
+
+  db.on('put', function (key, value) {
+    if(key < '~')
+      queue('map', bufferToString(key))
+  })
+  db.on('del', function (key) {
+    //NOT IMPLEMENTED YET!
+  })
+
+  var initial = opts.initial
+  var reducers = {}, rTimeout
 
   function group(key) {
     var start = key.slice()
@@ -96,14 +78,12 @@ module.exports = function (opts) {
 
     var values = []
 
-    console.log('doReduce', key)
-
     db.readStream(group(key))
       .pipe(through(function (data) {
         collection = reduce(collection, data.value, data.key)
       }, function () {
         //save the collection
-        emitter.emit('reduce', key.slice(1),collection)
+        db.emit('reduce', key.slice(1),collection)
 
         key[0] = key[0] - 1
         //TODO: when queuing, write a queue message to the DB.
@@ -114,7 +94,7 @@ module.exports = function (opts) {
 
           //queue the larger group to be reduced.
           key.pop()
-          queue({reduce: 1, key: bufferToString(key)})
+          queue('reduce', bufferToString(key))
           cb(err)
         })
       }))
@@ -127,7 +107,8 @@ module.exports = function (opts) {
     function queueK (key, id) {
       if(!Array.isArray(key)) key = [key]
       key.unshift(key.length + 1)
-      queue({reduce:1, key: bufferToString(key.slice())})
+
+      queue('reduce', bufferToString(key.slice()))
 
       key.push(id.toString())
       return sk(key)
@@ -163,16 +144,6 @@ module.exports = function (opts) {
       db.batch(maps, cb)
     })
   }
-
-  //open the db
-  /*
-  if(!db)
-    levelup(opts.path, opts, function (err, _db) {
-      db = _db
-      if(err) return emitter.emit('error', err)
-      emitter.emit('open', db)
-    })
-  */
 
   db.startMapReduce = function (key) {
   
