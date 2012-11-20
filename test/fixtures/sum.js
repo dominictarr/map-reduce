@@ -23,9 +23,7 @@ function genSum (path, cb) {
 }
 
 if(!module.parent) {
-
-  var dir = '/tmp/map-reduce-sum-test'
-  genSum()
+  genSum('/tmp/map-reduce-sum-test')
 }
 
 module.exports = genSum
