@@ -3,6 +3,7 @@ var through = require('through')
 var levelup = require('levelup')
 var queuer  = require('./queue')
 var Bucket  = require('./range-bucket')
+var prehook = require('./prehook')
 
 function sk (ary) {
   if(!Array.isArray(ary))
@@ -15,7 +16,6 @@ function sk (ary) {
 function bufferToString(b) {
   return JSON.stringify(Buffer.isBuffer(b) ? b.toString() : b)
 }
-
 
 module.exports = function (opts) {
 
@@ -56,11 +56,20 @@ module.exports = function (opts) {
       if(old && 'function' === typeof old.done) old.done()
     }
   }))
+  .use(prehook(function (batch) {
+    var l = batch.length
+    for(var i = 0; i < l; i++) {
+      var key = ''+batch[i].key
+      if(range.start <= key && key <= range.end && batch.type === 'put')
+        batch.push(queue('map', key, false))
+    }
+    return batch
+  }))
 
   var queue = db.queue.bind(db)
 
   //use prehook here!
-
+/*
   db.on('put', function (key, value) {
     //all docs
     key = key.toString()
@@ -70,7 +79,7 @@ module.exports = function (opts) {
   db.on('del', function (key) {
     //NOT IMPLEMENTED YET!
   })
-
+*/
   var initial = opts.initial
   var reducers = {}, rTimeout
 
