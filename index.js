@@ -59,6 +59,8 @@ module.exports = function (opts) {
 
   var queue = db.queue.bind(db)
 
+  //use prehook here!
+
   db.on('put', function (key, value) {
     //all docs
     key = key.toString()
@@ -94,17 +96,17 @@ module.exports = function (opts) {
         //TODO: when queuing, write a queue message to the DB.
         //do it in a batch with the main update.
         //leveldb is optomized for batch updates, so this will be fast.
-        db.put(bucket(_key), collection, function (err) {
-          if(!_key.length) return
+        var batch = [{type:'put', key: bucket(_key), value: collection}]
+        if(_key.length) {
           //if(key[0] <= 0) return
 
           //queue the parent group to be reduced.
           _key.pop()
-          //if this job has been queued but not started can we
-          //avoid this write?
-          queue('reduce', JSON.stringify(_key))
-          cb(err)
-        })
+          batch.push(queue('reduce', JSON.stringify(_key), false))
+        }
+
+        db.batch(batch, cb)
+        
       }))
   }
 
@@ -118,15 +120,16 @@ module.exports = function (opts) {
         if(!sync) throw new Error('emit called asynchronously')
         if(!~keys.indexOf(key)) {
           keys.push(key)
-          //queue a new reduce job.
-          queue('reduce', JSON.stringify([key])) //bufferToString(key.slice()))
-          console.log('SAVE', bucket([key, data.key]).toString())
           maps.push({
             type: 'put',
             //also, queue the next reduce.
             key: bucket([key, data.key]),
             value: value
           })
+          //add job to batch
+          maps.push(
+            queue('reduce', JSON.stringify([key]), false)
+          )
         }
       }
       emit.emit = emit
@@ -138,6 +141,7 @@ module.exports = function (opts) {
           map.unshift({type: 'del', key: _key})
       })
       //save the maps.
+      
       db.batch(maps, cb)
     })
   }
