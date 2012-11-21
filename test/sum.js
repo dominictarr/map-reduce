@@ -25,7 +25,7 @@ sum('/tmp/map-reduce-sum-test', function (err, db) {
 
   db.startMapReduce('sum')
 
-  db.on('reduce', mac(function (key, sum) {
+  db.on('reduce:sum', mac(function (key, sum) {
     console.log("REDUCE", key, sum)
     if(key.length == 0) {
       assert.equal(JSON.parse(sum), ( 1000 * 1001 ) / 2)

@@ -15,6 +15,7 @@ sum('/tmp/map-reduce-sum-test-range', function (err, db) {
   db.use(MR({
       start: '00000'
     , end: '00002'
+    , name: 'range'
     , map: function (key, value) {
       console.log("v", value)
       this.emit("const", value)
@@ -27,10 +28,11 @@ sum('/tmp/map-reduce-sum-test-range', function (err, db) {
 
   db.startMapReduce()
 
-  db.on('reduce', function (key, sum) {
+  db.on('reduce:range', function (key, sum) {
     console.log('range', sum)
     // 0, 1, 2 and 10000 are the individuals. Then 10-19,
     // 100-199 and 1000-1999
+    console.log('k',key, sum, (19 * 20) / 2)
     assert.equal(JSON.parse(sum), (19 * 20) / 2)
   })
 })
