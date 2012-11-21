@@ -6,7 +6,7 @@ var assert = require('assert')
 var alphabet = 'AOEUIDHTNSQJKXBMWVZPYFGCRLpyfgcrlaoeuidhtnszvwmbxkjq7531902468_-'
 
 function random(n) {
-  var a = alphabet[~~(Math.random()*26)]
+  var a = alphabet[~~(Math.random()*alphabet.length)]
   return ( n ? a + random(n - 1) : a )
 }
 
@@ -38,6 +38,21 @@ times(1000, function () {
 
 times(1000, function () {
   var b  = bucket(random(6))
+  var _b = bucket(random(6))
+  var K  = random(6)
+  var K2  = random(6)
+  var k  = b (K, K2)
+  var _k = _b(K, K2)
+
+  assert( within(b.range(), k) )
+  //keys for a different bucket *must* fall outside the range.
+  assert( !within(_b.range(),  k) )
+  assert(  within(_b.range(), _k) )
+})
+
+
+times(1000, function () {
+  var b  = bucket(random(6))
   var big = random(4), little = random(4), _little = random(4)
 
   assert(within(b.range([big, true]), b([big, little])))
@@ -47,5 +62,22 @@ times(1000, function () {
   assert(!within(b.range([big, little]), b([big, _little])))
   assert(within(b.range([big, true]), b([big, _little])))
   assert(within(b.range([true, true]), b([big, _little])))
+})
+
+times(10, function () {
+  var b  = bucket(random(6), 'sub')
+  var big = random(4), little = random(4), _little = random(4)
+
+  console.log(b.range([big, true]) )
+  console.log(b([big, little]))
+
+  assert(within(b.range([big, true])  , b([big, little])))
+  assert(within(b.range([big, little]), b([big, little])))
+  assert(within(b.range([true, true]) , b([big, little])))
+
+  assert(
+        !within(b.range([big, little]), b([big, _little])))
+  assert(within(b.range([big, true])  , b([big, _little])))
+  assert(within(b.range([true, true]) , b([big, _little])))
 })
 
