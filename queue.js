@@ -66,7 +66,6 @@ module.exports = function (prefix, work) {
     //listen for new jobs.
     db.use(posthook(function (change) {
       if(change.type == 'put' && /^~queue/.test(change.key)) {
-        console.log('POSTHOOK', change.key+'', change.value+'')
         onJob(change)
       }
     }))
@@ -106,16 +105,16 @@ module.exports = function (prefix, work) {
       var ts = timestamp()
       var key = toKey(job, ts)
 
-/*      if(put === false) {
+      if(put === false) {
         //return the job to be queued, to include it in a batch insert.
           return {
           type: 'put', 
           key: key, 
           value: value
         }
-      } else {*/
+      } else {
         db.put(key, value)
-      //}
+      }
     }
 
     db.queue = queue
