@@ -69,17 +69,6 @@ module.exports = function (opts) {
   var queue = db.queue.bind(db)
 
   //use prehook here!
-/*
-  db.on('put', function (key, value) {
-    //all docs
-    key = key.toString()
-    if(range.start <= key && key <= range.end)
-      queue('map', key)
-  })
-  db.on('del', function (key) {
-    //NOT IMPLEMENTED YET!
-  })
-*/
   var initial = opts.initial
   var reducers = {}, rTimeout
 
