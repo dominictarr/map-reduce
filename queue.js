@@ -10,15 +10,18 @@ module.exports = function (prefix, work) {
 
   return function (db) {
 
+    if(db.queue) {
+      for(var job in work) {
+        db.queue.add(job, work[job])
+      }
+      return
+    }
+
     var jobs = [], active = {}, batch = []
 
     if('string' !== typeof prefix)
       work = prefix, prefix = '~queue'
-
-    if(work && 'object' === typeof work) {
-      for(var job in work)
-        db.on('queue:start:'+job, work[job])
-    }
+    if(!work) work = {}
 
     /**
     on start up, read any unfinished jobs from database 
@@ -65,7 +68,7 @@ module.exports = function (prefix, work) {
 
     //listen for new jobs.
     db.use(posthook(function (change) {
-      if(change.type == 'put' && /^~queue/.test(change.key)) {
+      if(change.type == 'put' && /^~queue/.test(''+change.key)) {
         onJob(change)
       }
     }))
@@ -77,7 +80,9 @@ module.exports = function (prefix, work) {
 
     function start (job, ts, value) {
       inProgress ++
+      var n = 1
       function done () {
+        if(--n) return
         db.del(toKey(job, ts), function () {
           inProgress --
           try {
@@ -89,17 +94,13 @@ module.exports = function (prefix, work) {
           }
         })
       }
+      if('function' === typeof work[job])
+        work[job](value, done)
+
       db.emit('queue:start', job, value, done)
       //you should probably just use this pattern...
       db.emit('queue:start:'+job, value, done)
     }
-
-    /**
-      pass array of keys + batch to associate jobs with a batch insert.
-      this will mean that if the PUT can't be done without scheduling the jobs.
-
-      (even if the process crashes immediately after)
-    **/
 
     function queue (job, value, put) {
       var ts = timestamp()
@@ -109,14 +110,25 @@ module.exports = function (prefix, work) {
         //return the job to be queued, to include it in a batch insert.
           return {
           type: 'put', 
-          key: key, 
-          value: value
+          key: Buffer.isBuffer(key) ? key : new Buffer(key), 
+          value: Buffer.isBuffer(key) ? value : new Buffer(value)
         }
       } else {
         db.put(key, value)
       }
     }
 
+    //you should only add jobs in the first tick.
+    queue.add = function (job, worker) {
+      work[job] = worker
+      return queue
+    }
+
     db.queue = queue
+
+    for(var job in work)
+      db.queue.add(job, work[job])
+
+
   }
 }
