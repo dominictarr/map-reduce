@@ -12,8 +12,11 @@ rimraf(dir, function () {
 
     require('../use')(db)
 
+    var vowels = 'aeiou'.split('')
+
     db.use(MR({
       map: function (key, value) {
+        console.log('map', key.toString(), value)
         if(~vowels.indexOf(key.toString().toLowerCase()))
           this.emit('vowel', value)
         else
@@ -26,7 +29,6 @@ rimraf(dir, function () {
       initial: 0
     }))
 
-  var vowels = 'aeiou'.split('')
 
   db.put('A', '10')
   db.put('B', '20')
