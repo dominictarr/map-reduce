@@ -44,33 +44,46 @@ function join() {
 }
 
 module.exports = function (bucket) {
+  var args = [].slice.call(arguments)
   //remove any '~'
-  valid('bucket', bucket)
+  args.forEach(function (e) {
+    valid('bucket', e)
+  })
+
+  var bucket = args.join('~')
+
+  function fromArray (key) {
+    if(!Array.isArray(key))
+      return key
+    if(key.length > order.length)
+      throw new Error(
+          'group key too deep:' 
+        + JSON.stringify(key) 
+        + ' max depth is:' 
+        + order.length
+      )
+    var ary = []
+    key.forEach(valid.bind(null, 'group-key'))
+    var l = key.length
+    for(var i=0; i < l && true !== key[i]; i++)
+      ary.push(key[i])
+    
+    var r = JSON.stringify(ary)
+    return order[l] + ',' + r.substring(1, r.length - 1)
+  }
 
   function toKey (key) {
     if(!key) return join(bucket)
 
-    if(Array.isArray(key)) {
-      //this will probably never happen.
-      if(key.length > order.length)
-        throw new Error(
-            'group key too deep:' 
-          + JSON.stringify(key) 
-          + ' max depth is:' 
-          + order.length
-        )
+    var ary = [].map.call(arguments, function (key) {
+      valid('key', key)
+      return fromArray(key)
+    })
+    ary.unshift(bucket)
 
-      var ary = []
-      key.forEach(valid.bind(null, 'group-key'))
-      var l = key.length
-      for(var i=0; i < l && true !== key[i]; i++)
-        ary.push(key[i])
-      
-      var r = JSON.stringify(ary)
-      return join(bucket, order[l] + ',' + r.substring(1, r.length - 1))
-    }
-    valid('key', key)
-    return join(bucket, key)
+    return join.apply(null, ary)
+
+    //return join(bucket, key)
   }
 
   toKey.range = function (start, end) {
