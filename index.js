@@ -3,7 +3,7 @@ var through = require('through')
 var levelup = require('levelup')
 var queuer  = require('./queue')
 var Bucket  = require('./range-bucket')
-var prehook = require('./prehook')
+var hooks   = require('./hooks')
 
 module.exports = function (opts) {
 
@@ -32,7 +32,8 @@ module.exports = function (opts) {
     var emitter = db
   
     db.use(queuer())
-      .use(prehook(function (batch) {
+      .use(hooks())
+      .hooks.pre(function (batch) {
         var l = batch.length
         for(var i = 0; i < l; i++) {
           var key = ''+batch[i].key
@@ -44,7 +45,7 @@ module.exports = function (opts) {
           })
         }
         return batch
-      }))
+      })
 
     opts.forEach(function (view) {
       var name = view.name

@@ -2,7 +2,7 @@ var rimraf  = require('rimraf')
 var levelup = require('levelup')
 
 var use     = require('../use')
-var prehook = require('../prehook')
+var hooks   = require('../hooks')
 var Bucket  = require('../range-bucket')
 
 var assert  = require('assert')
@@ -15,8 +15,10 @@ rimraf(dir, function () {
 
     var SEQ = 0
     var bucket = Bucket('prehook')
+
     use(db)
-    .use(prehook(mac(function (batch) {
+    .use(hooks())
+    .hooks.pre(mac(function (batch) {
       //iterate backwards so you can push without breaking stuff.
       for(var i = batch.length - 1; i >= 0; --i) {
         var ch = batch[i]
@@ -34,7 +36,7 @@ rimraf(dir, function () {
       }
       batch.push({type: 'put', key: new Buffer('~seq'), value: new Buffer(SEQ.toString())})
       return batch
-    }).atLeast(1)))
+    }).atLeast(1))
 
     var n = 3
 

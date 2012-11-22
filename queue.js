@@ -4,7 +4,7 @@ LevelUp Queue.
 
 var through   = require('through')
 var timestamp = require('monotonic-timestamp')
-var posthook  = require('./posthook')
+var hooks     = require('./hooks')
 
 module.exports = function (prefix, work) {
 
@@ -67,12 +67,12 @@ module.exports = function (prefix, work) {
       })
 
     //listen for new jobs.
-    db.use(posthook(function (change) {
-      if(change.type == 'put' && /^~queue/.test(''+change.key)) {
-        onJob(change)
-      }
-    }))
-
+    db.use(hooks())
+      .hooks.post(function (change) {
+        if(change.type == 'put' && /^~queue/.test(''+change.key)) {
+          onJob(change)
+        }
+      })
 
     function toKey(job, ts) {
       return [prefix, job, (ts || timestamp()).toString()].join('~')
@@ -94,6 +94,7 @@ module.exports = function (prefix, work) {
           }
         })
       }
+
       if('function' === typeof work[job])
         work[job](value, done)
 
@@ -128,7 +129,6 @@ module.exports = function (prefix, work) {
 
     for(var job in work)
       db.queue.add(job, work[job])
-
 
   }
 }
