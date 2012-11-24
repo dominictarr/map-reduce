@@ -1,7 +1,7 @@
 var EventEmitter = require('events').EventEmitter
 var through = require('through')
 var levelup = require('levelup')
-var queuer  = require('./queue')
+var queuer  = require('level-queue')
 var Bucket  = require('range-bucket')
 var hooks   = require('level-hooks')
 
