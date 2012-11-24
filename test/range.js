@@ -12,7 +12,7 @@ sum('/tmp/map-reduce-sum-test-range', function (err, db) {
   if (err)
     throw err
 
-  db.use(MR({
+  MR({
       start: '00000'
     , end: '00002'
     , name: 'range'
@@ -24,7 +24,7 @@ sum('/tmp/map-reduce-sum-test-range', function (err, db) {
         return JSON.stringify(JSON.parse(big) + JSON.parse(little))
       }
     , initial: 0
-  }))
+  })(db)
 
   db.startMapReduce()
 

@@ -11,7 +11,7 @@ sum('/tmp/map-reduce-sum-test', function (err, db) {
   if(err)
     throw err
 
-  db.use(mapR({
+  mapR({
       name: 'sum',
       map: function (key, value) {
         //value = JSON.parse(value)
@@ -21,7 +21,7 @@ sum('/tmp/map-reduce-sum-test', function (err, db) {
         return JSON.stringify(JSON.parse(big) + JSON.parse(little))
       },
       initial: 0
-    }))
+    })(db)
 
   db.startMapReduce('sum')
 

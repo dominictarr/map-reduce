@@ -10,11 +10,9 @@ rimraf(dir, function () {
 
   levelup(dir, {createIfMissing: true}, function (err, db) {
 
-    require('../use')(db)
-
     var vowels = 'aeiou'.split('')
 
-    db.use(MR({
+    MR({
       name: 'live',
       map: function (key, value) {
         console.log('map', key.toString(), value)
@@ -28,7 +26,7 @@ rimraf(dir, function () {
         return JSON.stringify(JSON.parse(big.toString()) + JSON.parse(little.toString()))
       },
       initial: 0
-    }))
+    })(db)
 
 
     db.put('A', '10')

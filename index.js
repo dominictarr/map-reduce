@@ -31,21 +31,20 @@ module.exports = function (opts) {
 
     var emitter = db
   
-    db.use(queuer())
-      .use(hooks())
-      .hooks.pre(function (batch) {
-        var l = batch.length
-        for(var i = 0; i < l; i++) {
-          var key = ''+batch[i].key
-
-          opts.forEach(function (view) {
-            var name = view.name
-            if(view.start <= key && key <= view.end && batch[i].type === 'put')
-              batch.push(db.queue('map:'+name, key, false))
-          })
-        }
-        return batch
-      })
+    queuer()(db)
+    hooks()(db)
+    db.hooks.pre(function (batch) {
+      var l = batch.length
+      for(var i = 0; i < l; i++) {
+        var key = ''+batch[i].key
+        opts.forEach(function (view) {
+          var name = view.name
+          if(view.start <= key && key <= view.end && batch[i].type === 'put')
+            batch.push(db.queue('map:'+name, key, false))
+        })
+      }
+      return batch
+    })
 
     opts.forEach(function (view) {
       var name = view.name

@@ -7,9 +7,6 @@ function genSum (path, cb) {
   rimraf(path, function () {
     levelup(path, {createIfMissing: true}, function (err, db) {
 
-      //install plugin system
-      require('../../use')(db)
-
       var l = 1e3, i = 0
       var stream = db.writeStream()
       while(l--)
