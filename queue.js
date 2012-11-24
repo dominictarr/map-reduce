@@ -4,7 +4,7 @@ LevelUp Queue.
 
 var through   = require('through')
 var timestamp = require('monotonic-timestamp')
-var hooks     = require('./hooks')
+var hooks     = require('level-hooks')
 
 module.exports = function (prefix, work) {
 

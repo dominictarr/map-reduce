@@ -3,7 +3,7 @@ var through = require('through')
 var levelup = require('levelup')
 var queuer  = require('./queue')
 var Bucket  = require('range-bucket')
-var hooks   = require('./hooks')
+var hooks   = require('level-hooks')
 
 module.exports = function (opts) {
 

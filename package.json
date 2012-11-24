@@ -13,7 +13,8 @@
     "through": "~1.1.1",
     "from": "~0.0.2",
     "monotonic-timestamp": "0.0.7",
-    "range-bucket": "0.0.0"
+    "range-bucket": "0.0.0",
+    "level-hooks": "~1.0.0"
   },
   "devDependencies": {
     "rimraf": "~2.0.2",
