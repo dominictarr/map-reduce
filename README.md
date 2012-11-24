@@ -39,7 +39,10 @@ levelup(flie, {createIfMissing:true}, function (err, db) {
     //pass in the initial value for the reduce.
     //*must* be a string or buffer.
     initial: '0'
-  }])(db)
+
+  //CURRENTLY: install the map-reduce plugin like this:
+  //the future possibly db.use(mapReduce)...
+  }]) (db)
 })
 
 ```
