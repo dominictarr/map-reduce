@@ -3,7 +3,7 @@ var levelup = require('levelup')
 
 var use     = require('../use')
 var hooks   = require('../hooks')
-var Bucket  = require('../range-bucket')
+var Bucket  = require('range-bucket')
 
 var assert  = require('assert')
 var mac     = require('macgyver')().autoValidate()

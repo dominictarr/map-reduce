@@ -12,7 +12,8 @@
     "levelup": "~0.2.1",
     "through": "~1.1.1",
     "from": "~0.0.2",
-    "monotonic-timestamp": "0.0.7"
+    "monotonic-timestamp": "0.0.7",
+    "range-bucket": "0.0.0"
   },
   "devDependencies": {
     "rimraf": "~2.0.2",
