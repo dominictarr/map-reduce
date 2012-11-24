@@ -35,7 +35,7 @@ rimraf(dir, function () {
     db.put('D', '40')
     db.put('E', '50')
 
-    db.on('reduce:live', function (key, sum) {
+    db.on('map-reduce:reduce:live', function (key, sum) {
       console.log("REDUCE", key, sum)
       if(key.length == 0) {
         assert.equal(Number(sum), 150)

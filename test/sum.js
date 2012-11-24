@@ -23,9 +23,9 @@ sum('/tmp/map-reduce-sum-test', function (err, db) {
       initial: 0
     })(db)
 
-  db.startMapReduce('sum')
+  db.mapReduce.start('sum')
 
-  db.on('reduce:sum', mac(function (key, sum) {
+  db.on('map-reduce:reduce:sum', mac(function (key, sum) {
     console.log("REDUCE", key, sum)
     if(key.length == 0) {
       assert.equal(JSON.parse(sum), ( 1000 * 1001 ) / 2)
@@ -35,5 +35,10 @@ sum('/tmp/map-reduce-sum-test', function (err, db) {
         //.pipe(through(console.log))
     }
   }).times(3))
+
+  db.mapReduce.view('sum', {start: []})
+    .on('data', function (data) {
+      console.log('LIVE', '!'+data.key+'!', ''+data.value)
+    })
 })
 

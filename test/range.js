@@ -26,9 +26,9 @@ sum('/tmp/map-reduce-sum-test-range', function (err, db) {
     , initial: 0
   })(db)
 
-  db.startMapReduce()
+  db.mapReduce.start('range')
 
-  db.on('reduce:range', function (key, sum) {
+  db.on('map-reduce:reduce:range', function (key, sum) {
     console.log('range', sum)
     // 0, 1, 2 and 10000 are the individuals. Then 10-19,
     // 100-199 and 1000-1999
