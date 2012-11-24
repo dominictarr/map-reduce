@@ -1,6 +1,4 @@
-var EventEmitter = require('events').EventEmitter
-var through = require('through')
-var levelup = require('levelup')
+
 var queuer  = require('level-queue')
 var Bucket  = require('range-bucket')
 var hooks   = require('level-hooks')
@@ -84,9 +82,10 @@ module.exports = function (opts) {
         key.push(true)
 
         db.readStream(bucket.range(key))
-          .pipe(through(function (data) {
+          .on('data', function (data) {
             collection = view.reduce(collection, data.value, data.key)
-          }, function () {
+          })
+          .on('end', function () {
             //save the collection
 
             //get the parent group
@@ -108,7 +107,7 @@ module.exports = function (opts) {
 
             db.batch(batch, cb)
         
-          }))
+          })
       }
 
       view._doMap = doMap
