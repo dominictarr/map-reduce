@@ -17,9 +17,7 @@
     "through": "~1.1.1",
     "levelup": "~0.2.1",
     "rimraf": "~2.0.2",
-    "write-stream": "~0.4.3",
     "pad": "0.0.3",
-    "tap": "~0.3.2",
     "testem": "~0.2.25",
     "macgyver": "~1.9",
     "optimist": "0.3.5"
