@@ -1,7 +1,8 @@
 
-var queuer  = require('level-queue')
-var Bucket  = require('range-bucket')
-var hooks   = require('level-hooks')
+var queuer     = require('level-queue')
+var Bucket     = require('range-bucket')
+var hooks      = require('level-hooks')
+var liveStream = require('level-live-stream')
 
 module.exports = function (opts) {
 
@@ -27,10 +28,17 @@ module.exports = function (opts) {
 
   return function (db) {
 
-    var emitter = db
-  
+    if(db.mapReduce) {
+      return db
+    }
+    db.mapReduce = {views: {}}
+
+    //install plugins
     queuer()(db)
-    hooks()(db)
+    hooks ()(db)
+    liveStream(db)
+
+    //OH NO, THIS STILL DOESN'T SUPPORT DELETES PROPERLY.
     db.hooks.pre(function (batch) {
       var l = batch.length
       for(var i = 0; i < l; i++) {
@@ -46,7 +54,8 @@ module.exports = function (opts) {
 
     opts.forEach(function (view) {
       var name = view.name
-
+      var bucket = Bucket('mapr', name)
+      db.mapReduce.views[name] = bucket
       db.queue
         .add('map:'+name, function (job, done) {
           db.get(job, function (err, doc) {
@@ -91,8 +100,8 @@ module.exports = function (opts) {
             //get the parent group
             var _key = key.slice(); _key.pop()
 
-            db.emit('reduce', name, _key, collection)
-            db.emit('reduce:'+name, _key, collection)
+            db.emit('map-reduce:reduce', name, _key, collection)
+            db.emit('map-reduce:reduce:'+name, _key, collection)
             //TODO: when queuing, write a queue message to the DB.
             //do it in a batch with the main update.
             //leveldb is optomized for batch updates, so this will be fast.
@@ -104,8 +113,16 @@ module.exports = function (opts) {
               _key.pop()
               batch.push(db.queue('reduce:'+name, JSON.stringify(_key), false))
             }
+            /***
+              encountered a problem with doing hooks this way,
+              if I turn a batch into a put, then db won't emit the post event,
+              and there will be no post hook.
+            ***/
 
-            db.batch(batch, cb)
+            if(batch.length > 1)
+              db.batch(batch, cb)
+            else
+              db.put(batch[0].key, batch[0].value, cb)
         
           })
       }
@@ -150,23 +167,31 @@ module.exports = function (opts) {
     })
 
     //force the map-reduce to run.
-    db.startMapReduce = function (key) {
+    //I could save a map-reduce-state record into the db
+    //which if not present means it's necessary to rerun the full map-reduce.
+    db.mapReduce.start = function (key) {
       //delete range first?
       opts.forEach(function (view) {
         db.readStream(views)
           .on('data', function (data) {
             var key = ''+data.key
-          //.pipe(through(view._doMap))
             opts.forEach(function (view) {
               var name = view.name
 
               if(view.start <= key && key <= view.end)
                 view._doMap(data)
             })
-  
           })
       })
       return db
+    }
+
+    db.mapReduce.view = function (name, opts) {
+      opts = opts || {}
+      var range = db.mapReduce.views[name].range(opts.start, opts.end)
+      if(opts.tail === false)
+        return db.readStream(range)
+      return db.liveStream(range)
     }
   }
 }
