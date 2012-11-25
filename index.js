@@ -38,14 +38,13 @@ module.exports = function (opts) {
     hooks ()(db)
     liveStream(db)
 
-    //OH NO, THIS STILL DOESN'T SUPPORT DELETES PROPERLY.
     db.hooks.pre(function (batch) {
       var l = batch.length
       for(var i = 0; i < l; i++) {
         var key = ''+batch[i].key
         opts.forEach(function (view) {
           var name = view.name
-          if(view.start <= key && key <= view.end && batch[i].type === 'put')
+          if(view.start <= key && key <= view.end /*&& batch[i].type === 'put'*/)
             batch.push(db.queue('map:'+name, key, false))
         })
       }
@@ -87,7 +86,6 @@ module.exports = function (opts) {
 
         var collection = view.initial
         var values = []
-
         key.push(true)
 
         db.readStream(bucket.range(key))
@@ -96,7 +94,6 @@ module.exports = function (opts) {
           })
           .on('end', function () {
             //save the collection
-
             //get the parent group
             var _key = key.slice(); _key.pop()
 
@@ -107,23 +104,12 @@ module.exports = function (opts) {
             //leveldb is optomized for batch updates, so this will be fast.
             var batch = [{type:'put', key: bucket(_key), value: collection}]
             if(_key.length) {
-              //if(key[0] <= 0) return
-
               //queue the parent group to be reduced.
               _key.pop()
               batch.push(db.queue('reduce:'+name, JSON.stringify(_key), false))
             }
-            /***
-              encountered a problem with doing hooks this way,
-              if I turn a batch into a put, then db won't emit the post event,
-              and there will be no post hook.
-            ***/
 
-            if(batch.length > 1)
-              db.batch(batch, cb)
-            else
-              db.put(batch[0].key, batch[0].value, cb)
-        
+            db.batch(batch, cb)
           })
       }
 
@@ -131,18 +117,19 @@ module.exports = function (opts) {
 
       function doMap (data, cb) {
         var keys = [], sync = true, self = this
-
-        db.get(bucket('map', data.key), function (err, oldKeys) {
+        var mapOldKeys = bucket('map', data.key)
+        db.get(mapOldKeys, function (err, oldKeys) {
           oldKeys = oldKeys ? JSON.parse(oldKeys) : []
           var maps = []
           function emit (key, value) {
             if(!sync) throw new Error('emit called asynchronously')
             if(!~keys.indexOf(key)) {
-              keys.push(key)
+              var _key = bucket([key, data.key])
+              keys.push([key, data.key])
               maps.push({
                 type: 'put',
                 //also, queue the next reduce.
-                key: bucket([key, data.key]),
+                key: _key,
                 value: value
               })
               //add job to batch
@@ -152,15 +139,28 @@ module.exports = function (opts) {
             }
           }
           emit.emit = emit
-          view.map.call(emit, data.key, data.value, emit)
+
+          //don't do a map if this was a delete.
+          if('undefined' !== typeof data.value)
+            view.map.call(emit, data.key, data.value, emit)
+
           //setting this will make emit throw if it is called again later.
           sync = false
-          oldKeys.forEach(function (_key) {
-            if(!~keys.indexOf(_key))
-              map.unshift({type: 'del', key: _key})
+
+          oldKeys.forEach(function (kAry) {              
+              maps.unshift({type: 'del', key: bucket(kAry)})
+              kAry = kAry.slice(); kAry.pop()
+              maps.push(
+                db.queue('reduce:'+name, JSON.stringify(kAry), false)
+              )
           })
           //save the maps.
-      
+          maps.push({
+            type: keys.length ? 'put' : 'del', 
+            key: mapOldKeys, 
+            value: keys.length ? JSON.stringify(keys) : null 
+          })
+
           db.batch(maps, cb)
         })
       }
