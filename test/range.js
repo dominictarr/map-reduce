@@ -35,4 +35,9 @@ sum('/tmp/map-reduce-sum-test-range', function (err, db) {
     console.log('k',key, sum, (19 * 20) / 2)
     assert.equal(JSON.parse(sum), (19 * 20) / 2)
   })
+
+  db.mapReduce.view('range', {start: [true]})
+    .on('data', function (data) {
+      console.log(''+data.value)
+    })
 })
