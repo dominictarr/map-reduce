@@ -10,13 +10,13 @@ rimraf(dir, function () {
 
   levelup(dir, {createIfMissing: true}, function (err, db) {
 
-    var vowels = 'aeiou'.split('')
+    var vowels = 'AEIOU'.split('')
 
     MR({
       name: 'deletes',
       map: function (key, value) {
         //console.log('map', ''+key,''+value)
-        if(~vowels.indexOf(key.toString().toLowerCase()))
+        if(~vowels.indexOf(''+key))
           this.emit('vowel', value)
         else
           this.emit('consonant', value)
@@ -40,7 +40,7 @@ rimraf(dir, function () {
 
     var keys = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'
     var puts = [], deletes = []
-    var i = 0
+    var sum = 0
 
     times(26, 100, function (i) {
       var k = keys[i - 1]
@@ -49,29 +49,46 @@ rimraf(dir, function () {
         if(err) throw err
       })
     }, function () {      
-      times(21, 100, function (i) {
-        var k = keys[i + 4]
-        deletes.push(k)
-        db.del(k)
+      times(26, 100, function (i) {
+        var k = keys[i - 1]
+        if(~vowels.indexOf(k)) {
+          deletes.push(k)
+          db.del(k)
+        } else {
+          sum += i
+        }
+      }, function () {
+        console.log('SUM', sum)
       })
     })
 
     //eventually, this should emit [], 300
     //and                          [], 10
 
+    var _group, _vowels, _consonant
+
     db.on('map-reduce:reduce:deletes', function (key, sum) {
       console.log("REDUCE", key, sum)
-      return
-      if(key.length == 0) {
-        assert.equal(Number(sum), 300)
-        console.log('passed')
-        //mr.readStream({group: ['even']})
-          //.pipe(through(console.log))
-      } else if(key[0] == 'vowel') 
-        assert.equal(Number(sum), 20)
-      else if(key[0] == 'consonant') 
-        assert.equal(Number(sum), 20)
+      
+      if(key.length == 0 && sum == 300)
+        _group = true
+      else if(key[0] == 'vowel' && sum === 0) 
+        _vowels = true
+      else if(key[0] == 'consonant' && sum == 300) 
+        _consonant = true
     })
+
+    process.on('exit', function () {
+      assert(_group)
+      assert(_vowels)
+      assert(_consonant)
+      console.log('passed')
+    })
+
+    db.mapReduce.view('deletes', {start: [true]})
+      .on('data', function (data) {
+        console.log(''+data.key,''+data.value)
+      })
+
   })
 })
-
