@@ -3,6 +3,7 @@ var queuer     = require('level-queue')
 var Bucket     = require('range-bucket')
 var hooks      = require('level-hooks')
 var liveStream = require('level-live-stream')
+var delayJob   = require('./delay-job')
 
 module.exports = function (opts) {
 
@@ -56,29 +57,21 @@ module.exports = function (opts) {
       var bucket = Bucket('mapr', name)
       db.mapReduce.views[name] = bucket
       db.queue
+        //simplify by doing the maps jobs atomically,
+        //as part of the hook.
+        //OH, map is async, because a single map can point to many.
+        //and, it has implicit deletes.
+        //it's a fan-out map.
+        //and then reduce is fan-in.
+
+        //there are two distict modules here which are conflated.
+
         .add('map:'+name, function (job, done) {
           db.get(job, function (err, doc) {
             doMap({key: job, value: doc}, done)
           })
         })
-        .add('reduce:'+name, function (job, done) {
-          job = JSON.parse(job)
-          if('string' === typeof job)
-            throw new Error(JSON.stringify(job))
-          var jsonKey = JSON.stringify(job)
-
-          function go() {
-            delete reducers[jsonKey]
-            doReduce(job, done)
-          }
-          var old = reducers[jsonKey]
-          if(old) clearTimeout(old.timeout)
-          reducers[jsonKey] = {done: done, timeout: setTimeout(go, 500)}
-          //mark the old job as done.
-          if(old && 'function' === typeof old.done) old.done()
-        })
-
-      var reducers = {}
+        .add('reduce:'+name, delayJob(doReduce))
 
       function doReduce (key, cb) {
         if(!Array.isArray(key))
