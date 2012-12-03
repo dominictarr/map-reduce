@@ -19,7 +19,6 @@ module.exports = function (db) {
       var started = 0
       for(var name in db.map.views) {
         started ++
-        console.log('START')
         db.map.start(name, next)
       }
       function next() {
