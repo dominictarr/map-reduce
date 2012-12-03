@@ -3,8 +3,6 @@ var reduce = require('./reduce')
 
 module.exports = function (db) {
 
-  if(!db) return function module.exports
-
   if(db.mapReduce) return
 
   map(db)
@@ -21,12 +19,15 @@ module.exports = function (db) {
       var started = 0
       for(var name in db.map.views) {
         started ++
+        console.log('START')
         db.map.start(name, next)
       }
-      function done() {
+      function next() {
         if(!--started) done && done()
       }
     }
+    else
+      db.map.start(name, done)
   }
   db.mapReduce.view = db.reduce.view
 }
