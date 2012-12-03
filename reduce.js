@@ -1,6 +1,7 @@
-var trigger = require('level-trigger')
+var trigger    = require('level-trigger')
 var liveStream = require('level-live-stream')
 var viewStream = require('./view-stream')
+var delayJob   = require('./delay-job')
 
 var Bucket  = require('range-bucket')
 var map     = require('map-stream')
@@ -13,11 +14,13 @@ module.exports = function (db) {
   trigger(db)
   liveStream(db)
 
-  db.reduce = {}
+  var views = {}
+  db.reduce = {views: views}
 
-  db.reduce.view = viewStream(db, map.reduce)
+  db.reduce.view = viewStream(db, db.reduce)
 
   db.reduce.add = function (view) {
+    views[view.name] = view
     view.bucket = Bucket('mapr', view.name)
     view.depth = (view.depth && view.depth > 0) ? view.depth : 0
     var range = view.bucket.range()
@@ -25,9 +28,7 @@ module.exports = function (db) {
     function doReduce (key, cb) {
       var collection = view.initial, values = []
 
-      if(!Array.isArray(key))
-        key = JSON.parse(key)
-
+      key = JSON.parse(key)
       key.push(true)
 
       db.readStream(view.bucket.range(key))
@@ -38,7 +39,6 @@ module.exports = function (db) {
           //save the collection
           //get the parent group
           var _key = key.slice(); _key.pop()
-          console.log('r', key, collection)
           db.put(view.bucket(_key), collection, cb)
 
           db.emit('reduce', view.name, _key, collection)
@@ -51,17 +51,12 @@ module.exports = function (db) {
       end  : range.end,
       map  : function (data) {
         var key = view.bucket.parse(data.key).key
-        if(key.length <= view.depth) {
-          console.log('bottom!', key)
-          return
-        }
-        console.log('RMAP', key, data.key, range.within(key))
+        if(key.length <= view.depth) return
+
         key.pop()
         return JSON.stringify(key)
       }, 
-      job  : function (job, done) {
-        doReduce(JSON.parse(job), done)
-      }
+      job  : delayJob(doReduce)
     })
   }
 }
