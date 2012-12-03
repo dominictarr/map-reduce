@@ -39,7 +39,7 @@ sum('/tmp/map-reduce-sum-test', function (err, db) {
 
 //*/
 
-  db.mapReduce.view('sum', {start: [], tail: false})
+  db.mapReduce.view('sum', [])
     .on('data', mac(function (data) {
       console.log('LIVE', data.key, ''+data.value)
     }).atLeast(1))
