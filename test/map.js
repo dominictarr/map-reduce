@@ -28,7 +28,7 @@ rimraf(path, function () {
       db.del('a')
       db.map.view({name: 'test'})
         .on('data', function (data) {
-          console.log('view', ''+data.key, ''+data.value)
+          console.log('view', data.key, ''+data.value)
         })
     })
   })

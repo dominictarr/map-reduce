@@ -170,7 +170,6 @@ module.exports = function (opts) {
             var key = ''+data.key
             opts.forEach(function (view) {
               var name = view.name
-
               if(view.start <= key && key <= view.end)
                 view._doMap(data)
             })
