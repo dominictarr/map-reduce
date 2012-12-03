@@ -1,5 +1,5 @@
-var map = require('./map')
-var reduce = require('./reduce')
+var map = require('level-map')
+var reduce = require('level-reduce')
 
 module.exports = function (db) {
 
