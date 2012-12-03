@@ -35,12 +35,11 @@ module.exports = function (db) {
     })
 
     db.map.start = function (name, done) {
-      //...
-      db.readStream(views[name])
+      var rs = db.readStream(views[name])
         .pipe(map(function (data, next) {
           doMap(views[name], data, next)  
         }))
-        .on('end', done)
+      if(done) rs.on('end', done)
     }
     db.map.view = viewStream(db, db.map)
   }
