@@ -49,12 +49,12 @@ module.exports = function (db) {
       var r = views[name].bucket.range(opts.start, opts.end)
       opts.start = r.start
       opts.end   = r.end
-      return db.liveStream(opts)
-        .pipe(through(function (data) {
+      var ls = db.liveStream(opts)
+      return ls.pipe(through(function (data) {
           var _data = {key: view.bucket.parse(data.key).key, value: data.value}
           console.log('view', _data)
           this.queue(_data)
-        }))
+        })).once('close', ls.destroy.bind(ls))
     }
   }
 
