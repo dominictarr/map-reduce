@@ -1,5 +1,5 @@
 
-var MR      = require('../map-reduce')
+var MR      = require('..')
 var sum     = require('./fixtures/sum')
 var levelup = require('levelup')
 var assert  = require('assert')

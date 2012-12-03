@@ -1,4 +1,4 @@
-var MR      = require('../map-reduce')
+var MR      = require('..')
 var assert  = require('assert')
 var through = require('through')
 var rimraf  = require('rimraf')

@@ -1,5 +1,5 @@
 
-var mapR    = require('../map-reduce')
+var mapR    = require('..')
 var sum     = require('./fixtures/sum')
 var assert  = require('assert')
 var through = require('through')
