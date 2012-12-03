@@ -1,5 +1,6 @@
 var trigger = require('level-trigger')
 var liveStream = require('level-live-stream')
+var viewStream = require('./view-stream')
 
 var Bucket  = require('range-bucket')
 var map     = require('map-stream')
@@ -13,6 +14,8 @@ module.exports = function (db) {
   liveStream(db)
 
   db.reduce = {}
+
+  db.reduce.view = viewStream(db, map.reduce)
 
   db.reduce.add = function (view) {
     view.bucket = Bucket('mapr', view.name)

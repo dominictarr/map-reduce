@@ -1,9 +1,9 @@
 var trigger = require('level-trigger')
 var liveStream = require('level-live-stream')
+var viewStream = require('./view-stream')
 
 var Bucket  = require('range-bucket')
 var map     = require('map-stream')
-var through = require('through')
 
 module.exports = function (db) {
 
@@ -42,20 +42,7 @@ module.exports = function (db) {
         }))
         .on('end', done)
     }
-    db.map.view = function (name, opts) {
-      opts = 'object' === typeof name ? name : opts || {name: name}
-      name = opts.name || name
-      //...
-      var r = views[name].bucket.range(opts.start, opts.end)
-      opts.start = r.start
-      opts.end   = r.end
-      var ls = db.liveStream(opts)
-      return ls.pipe(through(function (data) {
-          var _data = {key: view.bucket.parse(data.key).key, value: data.value}
-          console.log('view', _data)
-          this.queue(_data)
-        })).once('close', ls.destroy.bind(ls))
-    }
+    db.map.view = viewStream(db, db.map)
   }
 
   function doMap (view, data, done) {
@@ -67,10 +54,7 @@ module.exports = function (db) {
       if(!sync) throw new Error('emit called asynchronously')
       var _key = view.bucket([].concat(key).concat(data.key))
       batch.push({
-        type: 'put',
-        //also, queue the next reduce.
-        key: _key,
-        value: value
+        type: 'put', key: _key, value: value
       })
       keys.push(_key)
     }
