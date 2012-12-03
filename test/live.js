@@ -1,4 +1,4 @@
-var MR      = require('..')
+var MR      = require('../map-reduce')
 var assert  = require('assert')
 var through = require('through')
 var rimraf  = require('rimraf')
@@ -12,7 +12,9 @@ rimraf(dir, function () {
 
     var vowels = 'aeiou'.split('')
 
-    MR({
+    MR(db)
+
+    db.mapReduce.add({
       name: 'live',
       map: function (key, value) {
         console.log('map', key.toString(), value)
@@ -26,7 +28,7 @@ rimraf(dir, function () {
         return JSON.stringify(JSON.parse(big.toString()) + JSON.parse(little.toString()))
       },
       initial: 0
-    })(db)
+    })
 
 
     db.put('A', '10')
@@ -35,7 +37,7 @@ rimraf(dir, function () {
     db.put('D', '40')
     db.put('E', '50')
 
-    db.on('map-reduce:reduce:live', function (key, sum) {
+    db.on('reduce:live', function (key, sum) {
       console.log("REDUCE", key, sum)
       if(key.length == 0) {
         assert.equal(Number(sum), 150)

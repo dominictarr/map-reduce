@@ -1,5 +1,5 @@
 
-var MR      = require('..')
+var MR      = require('../map-reduce')
 var sum     = require('./fixtures/sum')
 var levelup = require('levelup')
 var assert  = require('assert')
@@ -12,7 +12,8 @@ sum('/tmp/map-reduce-sum-test-range', function (err, db) {
   if (err)
     throw err
 
-  MR({
+  MR(db)
+  db.mapReduce.add({
       start: '00000'
     , end: '00002'
     , name: 'range'
@@ -24,7 +25,7 @@ sum('/tmp/map-reduce-sum-test-range', function (err, db) {
         return JSON.stringify(JSON.parse(big) + JSON.parse(little))
       }
     , initial: 0
-  })(db)
+  })
 
   db.mapReduce.start('range')
 

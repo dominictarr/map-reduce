@@ -1,4 +1,4 @@
-var MR      = require('..')
+var MR      = require('../map-reduce')
 var assert  = require('assert')
 var through = require('through')
 var rimraf  = require('rimraf')
@@ -12,7 +12,8 @@ rimraf(dir, function () {
 
     var vowels = 'AEIOU'.split('')
 
-    MR({
+    MR(db)
+    db.mapReduce.add({
       name: 'deletes',
       map: function (key, value) {
         //console.log('map', ''+key,''+value)
@@ -26,7 +27,7 @@ rimraf(dir, function () {
         return JSON.stringify(Number(''+big) + Number(''+little))
       },
       initial: 0
-    })(db)
+    })
 
     function times(n, delay, it, done) {
       var interval = setInterval(function () {
@@ -67,7 +68,7 @@ rimraf(dir, function () {
 
     var _group, _vowels, _consonant
 
-    db.on('map-reduce:reduce:deletes', function (key, sum) {
+    db.on('reduce:deletes', function (key, sum) {
       console.log("REDUCE", key, sum)
       
       if(key.length == 0 && sum == 300)
