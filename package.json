@@ -9,7 +9,7 @@
   },
   "author": "Dominic Tarr <dominic.tarr@gmail.com> (http://bit.ly/dominictarr)",
   "dependencies": {
-    "range-bucket": "~0.0.3",
+    "range-bucket": "~0.0.4",
     "level-hooks": "~1.1.1",
     "level-queue": "~0.0.4",
     "level-live-stream": "0.0.2",
