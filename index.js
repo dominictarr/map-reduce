@@ -10,8 +10,12 @@ module.exports = function (db) {
 
   db.mapReduce = {}
   db.mapReduce.add = function (view) {
+    view.map = view.map || function (key, value, emit) {
+      emit([], value)
+    }
     db.map.add(view)
-    db.reduce.add(view)
+    if(view.reduce)
+      db.reduce.add(view)
   }
 
   db.mapReduce.start = function (name, done) {
