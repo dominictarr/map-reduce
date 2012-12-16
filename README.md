@@ -15,9 +15,13 @@ and recieve change notifications on the fly! a la
 
 ``` js
 var levelup = require('levelup')
+var mapReduce = require('map-reduce')
+
 levelup(flie, {createIfMissing:true}, function (err, db) {
 
-  require('map-reduce')([{
+  mapReduce(db)
+
+  db.mapReduce.add({
     name  : 'example',  //defaults to 'default'
     start : '',         //defaults to ''
     end   : '~',        //defaults to '~' 
@@ -42,7 +46,7 @@ levelup(flie, {createIfMissing:true}, function (err, db) {
 
   //CURRENTLY: install the map-reduce plugin like this:
   //the future possibly db.use(mapReduce)...
-  }]) (db)
+  })
 })
 
 ```
