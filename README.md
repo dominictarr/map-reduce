@@ -99,7 +99,7 @@ the data looks like this:
 }
 ```
 
-we will aggregate to counts per-region, that look like this:
+We will aggregate to counts per-region, that look like this:
 
 ``` js
 //say: under the key USA
@@ -110,7 +110,7 @@ we will aggregate to counts per-region, that look like this:
 }
 ```
 
-first we'll map the raw data to `([country, state, city, street],type)` tuples.
+first we'll map the raw data to `([country, state, city],type)` tuples.
 then we'll count up all the instances of a particular type in that region!
 
 ``` js
@@ -175,8 +175,6 @@ db.mapReduce.view('streetfood', {start: ['USA', 'CA'], tail: false})
 db.mapReduce.view('streetfood', {start: ['USA', true]})
 
 ```
-
-
 
 ## License
 
