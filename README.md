@@ -95,7 +95,6 @@ the data looks like this:
   country: USA | Germany | Cambodia, etc...
   state:   CA | NY | '', etc...
   city: Oakland | New York | Berlin | Phnom Penh, etc...
-  street: ...,
   type: taco | chili-dog | doner | noodles, etc...
 }
 ```
@@ -124,11 +123,7 @@ levelup(flie, {createIfMissing:true}, function (err, db) {
   mapReduce(db)
 
   db.mapReduce.add({
-    name  : 'example',  //defaults to 'default'
-    start : '',         //defaults to ''
-    end   : '~',        //defaults to '~' 
-                        //map-reduce uses ~ to prefix special data, 
-                        //because ~ is the last ascii character.
+    name  : 'streetfood',
     map   : function (key, value, emit) {
       //perform some mapping.
       var obj = JSON.parse(value)
@@ -136,7 +131,7 @@ levelup(flie, {createIfMissing:true}, function (err, db) {
       //key may be an array of strings. 
       //value must be a string or buffer.
       emit(
-        [obj.country, obj.state || '', obj.city, obj.street],
+        [obj.country, obj.state || '', obj.city],
         //notice that we are just returning a string.
         JSON.stringify(obj.type)
       )
@@ -167,8 +162,21 @@ levelup(flie, {createIfMissing:true}, function (err, db) {
     initial: '{}'
   })
 })
+```
+
+then query it like this:
+
+``` js
+//pass tail: false, because new streetfood doesn't appear that often...
+db.mapReduce.view('streetfood', {start: ['USA', 'CA'], tail: false})
+  .pipe(...)
+//or get the streetfood counts for each state. 
+//we want to know about realtime changes this time.
+db.mapReduce.view('streetfood', {start: ['USA', true]})
 
 ```
+
+
 
 ## License
 
