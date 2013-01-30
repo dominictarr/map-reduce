@@ -51,8 +51,7 @@ levelup(flie, {createIfMissing:true}, function (err, db) {
 
 ```
 
-`map-reduce` uses [level-hooks](https://github.com/dominictarr/level-hooks)
-and [level-queue](https://github.com/dominictarr/level-queue) to make map reduces durable.
+`map-reduce` uses [level-trigger](https://github.com/dominictarr/level-trigger) to make map reduces durable.
 
 ### querying results.
 
