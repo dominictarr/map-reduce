@@ -9,15 +9,7 @@
   },
   "author": "Dominic Tarr <dominic.tarr@gmail.com> (http://bit.ly/dominictarr)",
   "dependencies": {
-    "range-bucket": "~0.0.6",
-    "level-hooks": "~1.1.1",
-    "level-queue": "~1.0",
-    "level-live-stream": "0.1.1",
-    "sha1sum": "0.0.1",
-    "level-trigger": "~0.1.0",
-    "map-stream": "0.0.1",
-    "through": "~2.1.0",
-    "level-reduce": "~0.0.6",
+    "level-reduce": "~0.0.7",
     "level-map": "~0.1"
   },
   "devDependencies": {
