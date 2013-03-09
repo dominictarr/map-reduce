@@ -80,5 +80,22 @@ module.exports = function (db, mapDb, map, reduce, initial) {
     return mapDb
   }
 
+  //patch streams so that they can handle 
+
+  var createReadStream = mapDb.createReadStream
+
+  mapDb.createReadStream = function (opts) {
+    opts = opts || {}
+    if(opts.range) {
+      var r = range.range(opts.range)
+      opts.start = r.start
+      opts.end   = r.end
+    }
+    return createReadStream.call(this, opts)
+      .on('data', function (data) {
+        if(data.key && opts.range)
+          data.key = range.parse(data.key)
+      })
+  }
   return mapDb
 }
