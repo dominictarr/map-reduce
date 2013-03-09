@@ -36,7 +36,7 @@ var mapDb =
     function (acc, value, key) {
       //reduce little into big
       //must return a string or buffer.
-      return return ''+(Number(acc) + Number(value))
+      return ''+(Number(acc) + Number(value))
     },
     //pass in the initial value for the reduce.
     //*must* be a string or buffer.
