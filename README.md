@@ -16,20 +16,16 @@ and recieve change notifications on the fly! a la
 ### create a simple map-reduce
 
 ``` js
-var levelup = require('levelup')
-var mapReduce = require('map-reduce')
+var LevelUp   = require('levelup')
+var SubLevel  = require('level-sublevel')
+var MapReduce = require('map-reduce')
 
-levelup(flie, {createIfMissing:true}, function (err, db) {
+var db = SubLevel(LevelUp(file))
 
-  mapReduce(db)
-
-  db.mapReduce.add({
-    name  : 'example',  //defaults to 'default'
-    start : '',         //defaults to ''
-    end   : '~',        //defaults to '~' 
-                        //map-reduce uses ~ to prefix special data, 
-                        //because ~ is the last ascii character.
-    map   : function (key, value, emit) {
+var mapDb = 
+  MapReduce(
+    'example',  //name.
+    function (key, value, emit) {
       //perform some mapping.
       var obj = JSON.parse(value)
       //emit(key, value)
@@ -37,21 +33,22 @@ levelup(flie, {createIfMissing:true}, function (err, db) {
       //value must be a string or buffer.
       emit(['all', obj.group], ''+obj.lines.length)
     },
-    reduce: function (acc, value, key) {
+    function (acc, value, key) {
       //reduce little into big
       //must return a string or buffer.
       return return ''+(Number(acc) + Number(value))
     },
     //pass in the initial value for the reduce.
     //*must* be a string or buffer.
-    initial: '0'
-
+    '0'
   })
 })
 
 ```
 
 `map-reduce` uses [level-trigger](https://github.com/dominictarr/level-trigger) to make map reduces durable.
+
+<!--
 
 ### querying results.
 
@@ -81,7 +78,7 @@ The stream responds correctly to `stream.pause()` and `stream.resume()`
 ``` js
   db.mapReduce.view(viewName, {start: ['all', true], tail: false}) 
 ```
-
+-->
 ### complex aggregations
 
 map-reduce with multiple levels of aggregation.
@@ -114,16 +111,14 @@ then we'll count up all the instances of a particular type in that region!
 
 ``` js
 
-var levelup = require('levelup')
-var mapReduce = require('map-reduce')
+var LevelUp   = require('levelup')
+var SubLevel  = require('level-sublevel')
+var MapReduce = require('map-reduce')
 
-levelup(flie, {createIfMissing:true}, function (err, db) {
-
-  mapReduce(db)
-
-  db.mapReduce.add({
-    name  : 'streetfood',
-    map   : function (key, value, emit) {
+var db = SubLevel(LevelUp(file))
+var mapper = 
+  MapReduce(db, 'streetfood',
+    function (key, value, emit) {
       //perform some mapping.
       var obj = JSON.parse(value)
       //emit(key, value)
@@ -135,7 +130,7 @@ levelup(flie, {createIfMissing:true}, function (err, db) {
         JSON.stringify(obj.type)
       )
     },
-    reduce: function (acc, value) {
+    function (acc, value) {
       acc = JSON.parse(acc)
       value = JSON.parse(value)
       //check if this is top level data, like 'taco' or 'noodle'
@@ -156,24 +151,22 @@ levelup(flie, {createIfMissing:true}, function (err, db) {
       //stringify the object, so that it can be written to disk!
       return JSON.stringify(acc)
     },
-    //pass in the initial value for the reduce.
-    //*must* be a string or buffer.
-    initial: '{}'
-  })
-})
+    '{}')
 ```
 
+<!--
 then query it like this:
 
 ``` js
 //pass tail: false, because new streetfood doesn't appear that often...
-db.mapReduce.view('streetfood', {start: ['USA', 'CA'], tail: false})
+mapper.createReadStream({range: ['USA', 'CA', true], tail: false})
   .pipe(...)
 //or get the streetfood counts for each state. 
 //we want to know about realtime changes this time.
 db.mapReduce.view('streetfood', {start: ['USA', true]})
 
 ```
+-->
 
 ## License
 
