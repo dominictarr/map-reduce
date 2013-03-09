@@ -48,29 +48,23 @@ var mapDb =
 
 `map-reduce` uses [level-trigger](https://github.com/dominictarr/level-trigger) to make map reduces durable.
 
-<!--
 
 ### querying results.
 
 ``` js
   //get all the results in a specific group
   //start:[...] implies end:.. to be the end of that group.
-  db.mapReduce.view(viewName, {start: ['all', group]}) 
+  mapDb.creatReadStream({range: ['all', group]}) 
 
   //get all the results in under a group.
-  db.mapReduce.view(viewName, {start: ['all', true]}) 
+  mapDb.creatReadStream({range: ['all', true]}) 
 
   //get all the top level 
-  db.mapReduce.view(viewName, {start: []}) 
-
-  //get a range
-  db.mapReduce.view(viewName, {start: ['all', group1], end: ['all', groupN]}) 
+  mapDb.creatReadStream({range: [true]})
 
 ```
 
-`db.mapReduce.view()` returns an instance of 
-[level-live-stream](https://github.com/dominictarr/level-live-stream)
-
+<!--
 by default, the stream will stay open, and continue to give you the latest results.
 This may be disabled by passing `{tail:false}`. 
 The stream responds correctly to `stream.pause()` and `stream.resume()`
@@ -116,7 +110,7 @@ var SubLevel  = require('level-sublevel')
 var MapReduce = require('map-reduce')
 
 var db = SubLevel(LevelUp(file))
-var mapper = 
+var mapDb = 
   MapReduce(db, 'streetfood',
     function (key, value, emit) {
       //perform some mapping.
@@ -154,16 +148,23 @@ var mapper =
     '{}')
 ```
 
-<!--
 then query it like this:
 
 ``` js
+mapDb.createReadStream({range: ['USA', 'CA', true]})
+  .pipe(...)
+```
+
+<!---
+TODO: add live-streams, and reinstate this documentation
+``` js
 //pass tail: false, because new streetfood doesn't appear that often...
-mapper.createReadStream({range: ['USA', 'CA', true], tail: false})
+
+mapDb.createReadStream({range: ['USA', 'CA', true]})
   .pipe(...)
 //or get the streetfood counts for each state. 
 //we want to know about realtime changes this time.
-db.mapReduce.view('streetfood', {start: ['USA', true]})
+mapDb.createReadStream({range: ['USA', true]})
 
 ```
 -->
