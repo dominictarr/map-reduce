@@ -12,7 +12,7 @@
     "level-reduce": "~0.0.7",
     "level-map": "~0.1",
     "level-trigger": "~1.1.0",
-    "level-sublevel": "~3.1"
+    "level-sublevel": "~3.2"
   },
   "devDependencies": {
     "through": "~1.1.1",
@@ -20,7 +20,8 @@
     "rimraf": "~2.0.2",
     "pad": "0.0.3",
     "macgyver": "~1.9",
-    "optimist": "0.3.5"
+    "optimist": "0.3.5",
+    "tape": "~0.2.2"
   },
   "scripts": {
     "test": "set -e; for t in test/*.js; do node $t; done"
