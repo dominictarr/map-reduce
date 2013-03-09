@@ -9,8 +9,6 @@
   },
   "author": "Dominic Tarr <dominic.tarr@gmail.com> (http://bit.ly/dominictarr)",
   "dependencies": {
-    "level-reduce": "~0.0.7",
-    "level-map": "~0.1",
     "level-trigger": "~1.1.0",
     "level-sublevel": "~3.2"
   },
