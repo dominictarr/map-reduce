@@ -1,36 +1,84 @@
-var map = require('level-map')
-var reduce = require('level-reduce')
+var Trigger = require('level-trigger')
+var range   = require('./range')
 
-module.exports = function (db) {
+module.exports = function (db, mapDb, map, reduce, initial) {
+  if('string' === typeof mapDb) mapDb = db.sublevel(mapDb)
 
-  if(db.mapReduce) return
+  //store the keys a value has been mapped to.
+  var mapper = mapDb.sublevel('mapped')
 
-  map(db)
-  reduce(db)
+  //when record is inserted, pull out what it was mapped to last time.
+  var maps = Trigger(db, 'maps', function (id, done) {
+    mapper.get(id, function (err, oldKeys) {
+      oldKeys = oldKeys ? JSON.parse(oldKeys) : []
+      var newKeys = []
 
-  db.mapReduce = {}
-  db.mapReduce.add = function (view) {
-    view.map = view.map || function (key, value, emit) {
-      emit([], value)
-    }
-    db.map.add(view)
-    if(view.reduce)
-      db.reduce.add(view)
+      db.get(id, function (err, value) {
+        var batch = [], async = false
+
+        //don't map if it's delete, just delete the old maps
+        if(value) map(id, value, function (key, value) {
+            var array = 'string' === typeof key ? [key] : key
+            if(true == async) return console.error('map must not emit async')
+            if(value == null || key == null) return
+            array.push(id)
+            batch.push({key: range.stringify(array), value: value, type: 'put'})
+            newKeys.push(range.stringify(array))
+          })
+        
+        async = true
+
+        oldKeys.forEach(function (k) {
+          if(!~newKeys.indexOf(k)) batch.push({key: k, type: 'del'})
+        })
+
+        batch.push({
+          key: id,
+          value: JSON.stringify(newKeys),
+          type: 'put',
+          prefix: mapper
+        })
+
+        mapDb.batch.call(mapDb, batch, done)
+      })
+    })
+  })
+
+  var reduces
+
+  if(reduce)
+    reduces = Trigger(mapDb, 'reduces', function (ch) {
+      var a = range.parse(ch.key); a.pop()
+      return JSON.stringify(a)
+    },
+    function (a, done) {
+      var array = JSON.parse(a)   
+      var acc = initial
+
+      mapDb.createReadStream(range.range(array.concat(true)))
+        .on('data', function (e) {
+          try {
+            acc = reduce(acc, e.value)
+          } catch (err) { console.error(err); return done(err); this.destroy() }
+        })
+        .on('end', function () {
+          mapDb.batch([{
+            key  : range.stringify(array),
+            value: acc,
+            type : acc == null ? 'del' : 'put'
+          }], function (err) {
+            if(err) return done(err)
+            mapDb.emit('reduce', array, acc)
+            done()
+          })
+        })
+    })
+
+  mapDb.start = function () {
+    maps.start()
+    reduces && reduces.start()
+    return mapDb
   }
 
-  db.mapReduce.start = function (name, done) {
-    if(!name) {
-      var started = 0
-      for(var name in db.map.views) {
-        started ++
-        db.map.start(name, next)
-      }
-      function next() {
-        if(!--started) done && done()
-      }
-    }
-    else
-      db.map.start(name, done)
-  }
-  db.mapReduce.view = db.reduce.view
+  return mapDb
 }
