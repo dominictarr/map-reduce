@@ -11,11 +11,12 @@
   "dependencies": {
     "level-reduce": "~0.0.7",
     "level-map": "~0.1",
-    "level-trigger": "~1.0.0"
+    "level-trigger": "~1.1.0",
+    "level-sublevel": "~3.1"
   },
   "devDependencies": {
     "through": "~1.1.1",
-    "levelup": "~0.5",
+    "levelup": "~0.6",
     "rimraf": "~2.0.2",
     "pad": "0.0.3",
     "macgyver": "~1.9",
