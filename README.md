@@ -24,6 +24,7 @@ var db = SubLevel(LevelUp(file))
 
 var mapDb = 
   MapReduce(
+    db, //the parent db
     'example',  //name.
     function (key, value, emit) {
       //perform some mapping.
@@ -111,7 +112,9 @@ var MapReduce = require('map-reduce')
 
 var db = SubLevel(LevelUp(file))
 var mapDb = 
-  MapReduce(db, 'streetfood',
+  MapReduce(
+    db,
+    'streetfood',
     function (key, value, emit) {
       //perform some mapping.
       var obj = JSON.parse(value)
