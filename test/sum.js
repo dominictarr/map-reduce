@@ -14,6 +14,7 @@ sum(dir, function (err, db) {
   if(err)
     throw err
   SubLevel(db)
+  var TOTAL = false
 
   var mapper = MapReduce(db, 'sum',
     function (key, value, emit) {
@@ -27,10 +28,16 @@ sum(dir, function (err, db) {
   mapper.on('reduce',
     mac(function (key, sum) {
     console.log('reduce', key, sum)
-      if(key.length == 0) {
-        assert.equal(JSON.parse(sum), ( 1000 * 1001 ) / 2)
-    }
-  }).times(3))
+      sum = Number(sum)
+      //this may callback with the wrong total before the process is finished.
+      //need to assert that this value is EVENTUALLY equal to (1000 * 1001) / 2
+      if(key.length == 0 && sum == ( 1000 * 1001 ) / 2)
+        TOTAL = true
+  }).atLeast(3))
+
+  process.on('exit', function () {
+    assert.ok(TOTAL, 'eventually hit the right value')
+  })
 
 //*/
   /*
