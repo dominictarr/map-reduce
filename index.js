@@ -7,6 +7,9 @@ module.exports = function (db, mapDb, map, reduce, initial) {
   //store the keys a value has been mapped to.
   var mapper = mapDb.sublevel('mapped')
 
+  if(!map)
+    throw new Error('expected a map function')
+
   //when record is inserted, pull out what it was mapped to last time.
   var maps = Trigger(db, 'maps', function (id, done) {
     mapper.get(id, function (err, oldKeys) {
