@@ -21,7 +21,7 @@ module.exports = function (db, mapDb, map, reduce, initial) {
 
         //don't map if it's delete, just delete the old maps
         if(value) map(id, value, function (key, value) {
-            var array = 'string' === typeof key ? [key] : key
+            var array = 'string' === typeof key ? [key] : key || []
             if(true == async) return console.error('map must not emit async')
             if(value == null || key == null) return
             array.push(id)
