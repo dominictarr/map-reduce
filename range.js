@@ -4,7 +4,9 @@ module.exports = function (sep, term, exports) {
 
   exports.parse = function (key) {
     var array = key.split(sep)
-    var l = array.shift()
+    var l = +array.shift()
+    if(l == 0)
+      return []
     return array
   }
 
@@ -16,12 +18,14 @@ module.exports = function (sep, term, exports) {
     return l + sep + key.filter(function (e) {
       return 'string' === typeof e
     }).join(sep)
+
+   // .map(function (e) { return e + sep } )
   }
 
   exports.range = function (array) {
     return {
-      start: exports.stringify(array),
-      end: exports.stringify(array) + term,
+      min: exports.stringify(array) ,
+      max: exports.stringify(array) + term,
     }
   }
 

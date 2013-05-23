@@ -1,5 +1,13 @@
 var Trigger = require('level-trigger')
 var range   = require('./range')
+var LiveStream = require('level-live-stream')
+var next
+if(typeof setImmediate == 'undefined')
+  next = process.nextTick
+else
+  next = setImmediate
+
+next = setTimeout
 
 module.exports = function (db, mapDb, map, reduce, initial) {
   if('string' === typeof mapDb) mapDb = db.sublevel(mapDb)
@@ -42,7 +50,9 @@ module.exports = function (db, mapDb, map, reduce, initial) {
           prefix: mapper
         })
 
-        mapDb.batch.call(mapDb, batch, done)
+        mapDb.batch.call(mapDb, batch, function (err) {
+          done(err)
+        })
       })
     })
   })
@@ -51,30 +61,37 @@ module.exports = function (db, mapDb, map, reduce, initial) {
 
   if(reduce)
     reduces = Trigger(mapDb, 'reduces', function (ch) {
-      var a = range.parse(ch.key); a.pop()
+      
+      var a = range.parse(ch.key);
+      if(!a.length) return
+
+      a.pop()
       return JSON.stringify(a)
     },
     function (a, done) {
       var array = JSON.parse(a)   
       var acc = initial
-
-      mapDb.createReadStream(range.range(array.concat(true)))
-        .on('data', function (e) {
-          try {
-            acc = reduce(acc, e.value)
-          } catch (err) { console.error(err); return done(err); this.destroy() }
-        })
-        .on('end', function () {
-          mapDb.batch([{
-            key  : range.stringify(array),
-            value: acc,
-            type : acc == null ? 'del' : 'put'
-          }], function (err) {
-            if(err) return done(err)
-            mapDb.emit('reduce', array, acc)
-            done()
+      next(function () {
+        //process.nextTick(function () {
+        mapDb.createReadStream(range.range(array.concat(true)))
+          .on('data', function (e) {
+            try {
+              acc = reduce(acc, e.value)
+            } catch (err) { console.error(err); return done(err); this.destroy() }
           })
-        })
+          .on('end', function () {
+            mapDb.batch([{
+              key  : range.stringify(array),
+              value: acc,
+              type : acc == null ? 'del' : 'put'
+            }], function (err) {
+              if(err) return done(err)
+
+              mapDb.emit('reduce', array, acc)
+              done()
+            })
+          })
+      }, 10)
     })
 
   mapDb.start = function () {
@@ -94,7 +111,11 @@ module.exports = function (db, mapDb, map, reduce, initial) {
       opts.start = r.start
       opts.end   = r.end
     }
-    return createReadStream.call(this, opts)
+
+    return  (
+        opts.tail ? LiveStream(this, opts)
+        : createReadStream.call(this, opts)
+      )
       .on('data', function (data) {
         if(data.key && opts.range)
           data.key = range.parse(data.key)
