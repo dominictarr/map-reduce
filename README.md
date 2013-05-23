@@ -11,6 +11,10 @@ only a relevant protion of the data needs to be recalculated.
 and recieve change notifications on the fly! a la 
 [level-live-stream](https://github.com/dominictarr/level-live-stream)
 
+If you just want something very simple, like mapping the date a blog post
+is created to the blog, then [level-index](https://github.com/dominictarr/level-index)
+may be enough.
+
 ## Example
 
 ### create a simple map-reduce
