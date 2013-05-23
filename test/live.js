@@ -16,13 +16,13 @@ var vowels = 'aeiou'.split('')
 
 var mr = MapReduce(db, 'live',
   function (key, value, emit) {
-    console.log('map', key.toString(), value)
     if(~vowels.indexOf(key.toString().toLowerCase()))
       emit('vowel', value)
     else
       emit('consonant', value)
   },
   function (big, little, key) {
+    console.log(big, little, key)
     return (
         Number((big || 0).toString())
       + Number(little.toString())
@@ -37,12 +37,8 @@ db.put('D', '40')
 db.put('E', '50')
 
 mr.on('reduce', function (key, sum) {
-  console.log("REDUCE", key, sum)
   if(key.length == 0) {
     assert.equal(Number(sum), 150)
-    console.log('passed')
-    //mr.readStream({group: ['even']})
-      //.pipe(through(console.log))
   } else if(key[0] == 'vowel') 
     assert.equal(Number(sum), 60)
   else if(key[0] == 'consonant') 
