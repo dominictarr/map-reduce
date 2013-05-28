@@ -9,6 +9,7 @@ var pad       = require('pad')
 
 var dir = '/tmp/map-reduce-sum-test'
 require('rimraf').sync(dir)
+
 var total = 0
 var n = 1000, target = (n * (n+1))/2
 sum(dir, n, function (err, db) {

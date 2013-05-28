@@ -15,12 +15,12 @@
   "devDependencies": {
     "level-sublevel": "~4.6",
     "through": "~1.1.1",
-    "levelup": "~0.8",
     "rimraf": "~2.0.2",
     "pad": "0.0.3",
     "macgyver": "~1.9",
     "optimist": "0.3.5",
-    "tape": "~0.2.2"
+    "tape": "~0.2.2",
+    "level": "~0.9.0"
   },
   "scripts": {
     "test": "set -e; for t in test/*.js; do node $t; done"

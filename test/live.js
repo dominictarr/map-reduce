@@ -3,7 +3,7 @@ var SubLevel  = require('level-sublevel')
 var assert    = require('assert')
 var through   = require('through')
 var rimraf    = require('rimraf')
-var levelup   = require('levelup')
+var levelup   = require('level')
 
 var dir ='/tmp/map-reduce-live-test' 
 

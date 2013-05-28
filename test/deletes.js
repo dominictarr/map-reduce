@@ -2,7 +2,7 @@ var MapReduce = require('..')
 var assert    = require('assert')
 var through   = require('through')
 var rimraf    = require('rimraf')
-var levelup   = require('levelup')
+var levelup   = require('level')
 var SubLevel  = require('level-sublevel')
 
 var dir ='/tmp/map-reduce-deletes-test' 
