@@ -29,6 +29,7 @@ module.exports = function (sep, term, exports) {
     }
   }
 
+  return exports
 }
 
 module.exports ('!', '~', module.exports)
