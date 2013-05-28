@@ -15,9 +15,18 @@ module.exports = function (sep, term, exports) {
       key = [key]
     var l = key.length
 
-    return l + sep + key.filter(function (e) {
+    return l + sep + key
+    .map(function (e) {
+      if('number' === typeof e)
+        return e.toString()
+      return  e
+    })
+    .filter(function (e) {
       return 'string' === typeof e
-    }).join(sep)
+    })
+
+
+    .join(sep)
 
    // .map(function (e) { return e + sep } )
   }
