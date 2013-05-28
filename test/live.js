@@ -3,11 +3,9 @@ var SubLevel  = require('level-sublevel')
 var assert    = require('assert')
 var through   = require('through')
 var rimraf    = require('rimraf')
-var levelup   = require('level')
+var levelup   = require('level-test')()
 
-var dir ='/tmp/map-reduce-live-test' 
-
-rimraf.sync(dir)
+var dir ='map-reduce-live-test' 
 
 var db = levelup(dir)
 SubLevel(db)

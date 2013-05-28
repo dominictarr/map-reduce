@@ -19,8 +19,10 @@
     "pad": "0.0.3",
     "macgyver": "~1.9",
     "optimist": "0.3.5",
-    "tape": "~0.2.2",
-    "level": "~0.9.0"
+    "pull-stream": "~2.18.2",
+    "pull-level": "~1.1.0",
+    "level-test": "~1.1",
+    "tape": "~1.0.2"
   },
   "scripts": {
     "test": "set -e; for t in test/*.js; do node $t; done"

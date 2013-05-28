@@ -2,12 +2,10 @@ var MapReduce = require('..')
 var assert    = require('assert')
 var through   = require('through')
 var rimraf    = require('rimraf')
-var levelup   = require('level')
+var levelup   = require('level-test')()
 var SubLevel  = require('level-sublevel')
 
-var dir ='/tmp/map-reduce-deletes-test' 
-
-rimraf.sync(dir)
+var dir ='map-reduce-deletes-test' 
 
 var db = SubLevel(levelup(dir))
 

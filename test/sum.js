@@ -7,8 +7,7 @@ var through   = require('through')
 var mac       = require('macgyver')().autoValidate()
 var pad       = require('pad')
 
-var dir = '/tmp/map-reduce-sum-test'
-require('rimraf').sync(dir)
+var dir = 'map-reduce-sum-test'
 
 var total = 0
 var n = 1000, target = (n * (n+1))/2
