@@ -31,6 +31,7 @@ sum(dir, n, function (err, db) {
       total = sum = Number(sum)
       //this may callback with the wrong total before the process is finished.
       //need to assert that this value is EVENTUALLY equal to (n * (n + 1)) / 2
+      console.log(key, sum)
       if(key.length == 0 && sum == target)
         TOTAL = true
   }).atLeast(3))
