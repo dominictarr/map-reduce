@@ -33,14 +33,22 @@ db.put('B', '20')
 db.put('C', '30')
 db.put('D', '40')
 db.put('E', '50')
+var total, vowels, consonants
 
 mr.on('reduce', function (key, sum) {
+  console.log(key, sum)
   if(key.length == 0) {
-    assert.equal(Number(sum), 150)
+      total = +sum
   } else if(key[0] == 'vowel') 
-    assert.equal(Number(sum), 60)
+    vowels = +sum //60
   else if(key[0] == 'consonant') 
-    assert.equal(Number(sum), 90)    
+   consonants = +sum
 })
 
 
+process.on('exit', function () {
+  assert.equal(total, 150)
+  assert.equal(vowels, 60)
+  assert.equal(consonants, 90)
+
+})
