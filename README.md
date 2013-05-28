@@ -2,6 +2,8 @@
 
 Incremental map-reduces and real-time results.
 
+[![Build Status](https://travis-ci.org/dominictarr/map-reduce.png?branch=master)](https://travis-ci.org/dominictarr/map-reduce)
+
 ## Waat?
 
 An "incremental map reduce" means when you update one key,
