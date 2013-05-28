@@ -50,9 +50,8 @@ module.exports = function (db, mapDb, map, reduce, initial) {
           type: 'put',
           prefix: mapper
         })
-        mapDb.batch.call(mapDb, batch, function (err) {
-          done(err)
-        })
+
+        mapDb.batch.call(mapDb, batch, done)
       })
     })
   })
@@ -71,27 +70,26 @@ module.exports = function (db, mapDb, map, reduce, initial) {
     function (a, done) {
       var array = JSON.parse(a)   
       var acc = initial
-      next(function () {
-        //process.nextTick(function () {
-        mapDb.createReadStream(range.range(array.concat(true)))
-          .on('data', function (e) {
-            try {
-              acc = reduce(acc, e.value)
-            } catch (err) { console.error(err); return done(err); this.destroy() }
-          })
-          .on('end', function () {
-            mapDb.batch([{
-              key  : range.stringify(array),
-              value: acc,
-              type : acc == null ? 'del' : 'put'
-            }], function (err) {
-              if(err) return done(err)
+      mapDb.createReadStream(range.range(array.concat(true)))
+        .on('data', function (e) {
+          try {
+            acc = reduce(acc, e.value)
+          } catch (err) {
+          console.error(err); return done(err); this.destroy() }
+        })
+        .on('end', function () {
+          var batch
+          mapDb.batch([batch = {
+            key  : range.stringify(array),
+            value: ''+acc,
+            type : acc == null ? 'del' : 'put'
+          }], function (err) {
+            if(err) return done(err)
 
-              mapDb.emit('reduce', array, acc)
-              done()
-            })
+            mapDb.emit('reduce', array, acc)
+            done()
           })
-      }, 10)
+        })
     })
 
   mapDb.start = function () {
