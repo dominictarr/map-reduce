@@ -28,7 +28,8 @@ module.exports = function (db, mapDb, map, reduce, initial) {
         var batch = [], async = false
 
         //don't map if it's delete, just delete the old maps
-        if(value) map(id, value, function (key, value) {
+        if(value != null)
+          map(id, value, function (key, value) {
             var array = 'string' === typeof key ? [key] : key || []
             if(true == async) return console.error('map must not emit async')
             if(value == null || key == null) return
@@ -49,7 +50,6 @@ module.exports = function (db, mapDb, map, reduce, initial) {
           type: 'put',
           prefix: mapper
         })
-
         mapDb.batch.call(mapDb, batch, function (err) {
           done(err)
         })
@@ -108,18 +108,12 @@ module.exports = function (db, mapDb, map, reduce, initial) {
     opts = opts || {}
     if(opts.range) {
       var r = range.range(opts.range)
-      opts.start = r.start
-      opts.end   = r.end
+      opts.start = opts.min = r.min
+      opts.end = opts.max  = r.max
     }
+    return createReadStream.call(this, opts)
 
-    return  (
-        opts.tail ? LiveStream(this, opts)
-        : createReadStream.call(this, opts)
-      )
-      .on('data', function (data) {
-        if(data.key && opts.range)
-          data.key = range.parse(data.key)
-      })
   }
+
   return mapDb
 }
