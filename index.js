@@ -112,6 +112,13 @@ module.exports = function (db, mapDb, map, reduce, initial) {
     return createReadStream.call(this, opts)
 
   }
+  
+  var oldGet = mapDb.get
+  
+  mapDb.get = function(key){
+    if(Array.isArray(key)) key = range.stringify(key)
+    oldGet.apply(this, arguments)
+  }
 
   return mapDb
 }
