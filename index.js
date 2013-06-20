@@ -117,7 +117,7 @@ module.exports = function (db, mapDb, map, reduce, initial) {
   
   mapDb.get = function(key){
     if(Array.isArray(key)) key = range.stringify(key)
-    oldGet.apply(this, arguments)
+    return oldGet.apply(this, arguments)
   }
 
   return mapDb
