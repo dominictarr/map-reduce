@@ -178,6 +178,31 @@ mapDb.createReadStream({range: ['USA', true]})
 ```
 -->
 
+## retrive a specific result
+
+pass `db.get` an array, and you can retrive a specific value, by group.
+
+``` js
+var userMapping = require("map-reduce")(
+    db,
+    "userPoints",
+    function(key, value, emit){
+        value = JSON.parse(value);
+        var date = new Date(value.created);
+        emit([value.user, date.getYear(), date.getMonth()], value.amount);
+    },
+    function(acc, value){
+        return (Number(acc) + Number(value)).toString();
+    },
+    0
+);
+
+function getTotalPointsForUser(user, year, month, cb){
+    userMapping.get([user, year, month], cb);
+}
+
+```
+
 ## License
 
 MIT
