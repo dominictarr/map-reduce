@@ -1,12 +1,14 @@
+// To run this example install levelup and leveldown. 
+// npm install levelup leveldown 
+// please delete /tmp/map-reduce-example on each run 
 
 var db = require('level-sublevel')
   (require('levelup')('/tmp/map-reduce-example'))
-
 var MapReduce = require('./')
 
 var mapped = MapReduce(db, 'example', function (key, value, emit) {
-  console.log('MAP', key, value, '->', 2 % Number(value) ? 'even' : 'odd')
-  if(2 % Number(value))
+  console.log('MAP', key, value, '->', Number(value) % 2 ? 'odd' : 'even')
+  if(Number(value) % 2)
     emit('even', Number(value))
   else
     emit('odd', Number(value))
