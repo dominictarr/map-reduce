@@ -8,7 +8,7 @@ var MapReduce = require('./')
 
 var mapped = MapReduce(db, 'example', function (key, value, emit) {
   console.log('MAP', key, value, '->', Number(value) % 2 ? 'odd' : 'even')
-  if(Number(value) % 2)
+  if(Number(value) % 2 == 0)
     emit('even', Number(value))
   else
     emit('odd', Number(value))
