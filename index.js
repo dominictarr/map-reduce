@@ -1,6 +1,5 @@
 var Trigger = require('level-trigger')
 var range   = require('./range')
-var LiveStream = require('level-live-stream')
 var next
 if(typeof setImmediate == 'undefined')
   next = process.nextTick
