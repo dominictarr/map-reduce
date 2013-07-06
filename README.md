@@ -80,6 +80,7 @@ The stream responds correctly to `stream.pause()` and `stream.resume()`
   db.mapReduce.view(viewName, {start: ['all', true], tail: false}) 
 ```
 -->
+
 ### complex aggregations
 
 map-reduce with multiple levels of aggregation.
@@ -176,6 +177,7 @@ mapDb.createReadStream({range: ['USA', 'CA', true]})
 mapDb.createReadStream({range: ['USA', true]})
 
 ```
+
 -->
 
 ## retrive a specific result
