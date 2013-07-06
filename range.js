@@ -22,10 +22,8 @@ module.exports = function (sep, term, exports) {
       return  e
     })
     .filter(function (e) {
-      return 'string' === typeof e
+      return 'string' === typeof e && e
     })
-
-
     .join(sep)
 
    // .map(function (e) { return e + sep } )
