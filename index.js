@@ -50,7 +50,7 @@ module.exports = function (db, mapDb, map, reduce, initial) {
           prefix: mapper
         })
 
-        mapDb.batch.call(mapDb, batch, done)
+        mapDb.batch(batch, done)
       })
     })
   })
@@ -59,10 +59,8 @@ module.exports = function (db, mapDb, map, reduce, initial) {
 
   if(reduce)
     reduces = Trigger(mapDb, 'reduces', function (ch) {
-      
       var a = range.parse(ch.key);
       if(!a.length) return
-
       a.pop()
       return JSON.stringify(a)
     },
