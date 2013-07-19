@@ -9,10 +9,10 @@
   },
   "author": "Dominic Tarr <dominic.tarr@gmail.com> (http://bit.ly/dominictarr)",
   "dependencies": {
-    "level-trigger": "~1.1.4"
+    "level-trigger": "~1.2.1"
   },
   "devDependencies": {
-    "level-sublevel": "~4.6",
+    "level-sublevel": "~4.8",
     "through": "~1.1.1",
     "rimraf": "~2.0.2",
     "pad": "0.0.3",
