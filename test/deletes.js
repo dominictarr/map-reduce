@@ -5,9 +5,7 @@ var rimraf    = require('rimraf')
 var levelup   = require('level-test')()
 var SubLevel  = require('level-sublevel')
 
-var dir ='map-reduce-deletes-test' 
-
-var db = SubLevel(levelup(dir))
+var db = SubLevel(levelup('map-reduce-deletes-test'))
 
 var vowels = 'AEIOU'.split('')
 

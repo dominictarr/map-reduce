@@ -8,6 +8,14 @@ var MapReduce = require('../')
 var db = level()
 var sublevel = require('level-sublevel')
 
+function exactly (n) {
+  return function (read) {
+    return function (abort, cb) {
+      if(0 <=--n) read(abort, cb)
+      else cb(true)
+    }
+  }
+}
 
 test ('ranges', function (t) {
   var db = sublevel(level())
@@ -21,7 +29,7 @@ test ('ranges', function (t) {
     return +(acc || 0) + +item
   })
 
-//  mapDb.post(console.log.bind(null, '  ?'))
+  mapDb.post(console.log.bind(null, '  ?'))
 
  var sums = {
     0: 0
@@ -33,29 +41,28 @@ test ('ranges', function (t) {
     var _depth = depth
     while(_depth--)
       r.push(true)
-
-    pl.read(mapDb, {range: r, tail: true})
-      .pipe(function (read) {
-        return function (abort, cb) {
-          read(abort, cb)
-        }
-      })
-      .pipe(pull.through(console.log))
-      .pipe(pull.take(expected))
-      .pipe(pull.through(function (e) {
+    
+    pull(
+      pl.read(mapDb, {range: r, tail: true}),
+      pull.through(console.log),
+      exactly(expected),
+      pull.through(function (e) {
           var a = range.parse(e.key)
           t.equal(a.length, depth)
           console.log(a)
-      }))
-      .pipe(pull.drain(console.log.bind(null, '>>>'), cb))
+      }),
+      pull.drain(console.log.bind(null, '>>>'), cb)
+    )
   }
 
-  pull.count(100)
-    .pipe(pull.map(function (e) {
+  pull(
+    pull.count(100),
+    pull.map(function (e) {
       return {key: e, value: e, type: 'put'}
-    }))
-    .pipe(pl.write(db, function () {
+    }),
+    pl.write(db, function () {
 
+       console.log('written')
        var n = 3
        checkRange(3, 100, function (err) {
           if(err) throw err
@@ -72,5 +79,6 @@ test ('ranges', function (t) {
           if(--n) return
           t.end()
        })
-    }))
+    })
+  )
 })
