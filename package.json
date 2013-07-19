@@ -9,7 +9,7 @@
   },
   "author": "Dominic Tarr <dominic.tarr@gmail.com> (http://bit.ly/dominictarr)",
   "dependencies": {
-    "level-trigger": "~1.2.1"
+    "level-trigger": "~1.2.2"
   },
   "devDependencies": {
     "level-sublevel": "~4.8",
