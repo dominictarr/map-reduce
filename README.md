@@ -61,13 +61,13 @@ var mapDb =
 ``` js
   //get all the results in a specific group
   //start:[...] implies end:.. to be the end of that group.
-  mapDb.creatReadStream({range: ['all', group]}) 
+  mapDb.createReadStream({range: ['all', group]}) 
 
   //get all the results in under a group.
-  mapDb.creatReadStream({range: ['all', true]}) 
+  mapDb.createReadStream({range: ['all', true]}) 
 
   //get all the top level 
-  mapDb.creatReadStream({range: [true]})
+  mapDb.createReadStream({range: [true]})
 
 ```
 
