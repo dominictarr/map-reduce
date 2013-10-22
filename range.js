@@ -1,3 +1,4 @@
+var bytewise = require('bytewise')
 
 module.exports = function (sep, term, exports) {
   exports = exports || {}
@@ -18,7 +19,7 @@ module.exports = function (sep, term, exports) {
     return l + sep + key
     .map(function (e) {
       if('number' === typeof e)
-        return e.toString()
+        return bytewise.encode(e).toString('hex')
       return  e
     })
     .filter(function (e) {

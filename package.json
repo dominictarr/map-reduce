@@ -12,6 +12,7 @@
     "level-trigger": "~1.2.2"
   },
   "devDependencies": {
+    "bytewise": "~0.6.1",
     "level-sublevel": "~4.8",
     "through": "~1.1.1",
     "rimraf": "~2.0.2",
