@@ -4,7 +4,7 @@ module.exports = function (sep, term, exports) {
   exports = exports || {}
 
   exports.parse = function (key) {
-    var array = key.split(sep)
+    var array = bytewise.decode(new Buffer(key, 'hex')).split(sep)
     var l = +array.shift()
     if(l == 0)
       return []
@@ -16,18 +16,16 @@ module.exports = function (sep, term, exports) {
       key = [key]
     var l = key.length
 
-    return l + sep + key
+    return bytewise.encode(l + sep + key
     .map(function (e) {
       if('number' === typeof e)
-        return bytewise.encode(e).toString('hex')
+        return e.toString()
       return  e
     })
     .filter(function (e) {
       return 'string' === typeof e && e
     })
-    .join(sep)
-
-   // .map(function (e) { return e + sep } )
+    .join(sep)).toString('hex')
   }
 
   exports.range = function (array) {
