@@ -107,7 +107,17 @@ module.exports = function (db, mapDb, map, reduce, initial) {
       opts.end = opts.max  = r.max
     }
     return createReadStream.call(this, opts)
+  }
 
+  mapDb.createViewStream = function(opts) {
+    var stream = this.createReadStream(opts)
+    stream.on('data', function(d) {
+      stream.emit('row', {
+        key: range.parse(d.key),
+        value: d.value
+      })
+    })
+    return stream
   }
   
   var oldGet = mapDb.get
