@@ -112,10 +112,7 @@ module.exports = function (db, mapDb, map, reduce, initial) {
   mapDb.createViewStream = function(opts) {
     var stream = this.createReadStream(opts)
     stream.on('data', function(d) {
-      stream.emit('row', {
-        key: range.parse(d.key),
-        value: d.value
-      })
+      d.key = range.parse(d.key)
     })
     return stream
   }
