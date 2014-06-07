@@ -18,7 +18,7 @@ module.exports = function (db, mapDb, map, reduce, initial) {
     throw new Error('expected a map function')
 
   //when record is inserted, pull out what it was mapped to last time.
-  var maps = Trigger(db, 'maps', function (id, done) {
+  var maps = Trigger(db, mapDb.sublevel('maps'), function (id, done) {
     mapper.get(id, function (err, oldKeys) {
       oldKeys = oldKeys ? JSON.parse(oldKeys) : []
       var newKeys = []
