@@ -7,8 +7,7 @@ var levelup   = require('level-test')()
 
 var dir ='map-reduce-live-test' 
 
-var db = levelup(dir)
-SubLevel(db)
+var db = SubLevel(levelup(dir))
 
 var vowels = 'aeiou'.split('')
 
@@ -20,7 +19,7 @@ var mr = MapReduce(db, 'live',
       emit('consonant', value)
   },
   function (big, little, key) {
-    console.log(big, little, key)
+    console.log(big, little)
     return (
         Number((big || 0).toString())
       + Number(little.toString())
@@ -50,5 +49,5 @@ process.on('exit', function () {
   assert.equal(total, 150)
   assert.equal(vowels, 60)
   assert.equal(consonants, 90)
-
+  console.log('passed')
 })
