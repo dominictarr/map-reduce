@@ -14,7 +14,6 @@ var n = 1000, target = (n * (n+1))/2
 sum(dir, n, function (err, db) {
   if(err)
     throw err
-  SubLevel(db)
   var TOTAL = false
 
   var mapper = MapReduce(db, 'sum',
@@ -37,7 +36,7 @@ sum(dir, n, function (err, db) {
   }).atLeast(3))
 
   process.on('exit', function () {
-    assert.ok(TOTAL, 'eventually hit the right value')
+    assert.ok(TOTAL, 'eventually hit the right value: ' + target + ' but got to: ' + total)
   })
 })
 
