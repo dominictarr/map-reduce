@@ -18,7 +18,7 @@ function exactly (n) {
 }
 
 test ('ranges', function (t) {
-  var db = sublevel(level())
+  var db = sublevel(level('map-reduce-ranges'))
   //numbers under between 1-100
 
   var mapDb = MapReduce(db, 'mapper', function (key, value, emit) {
@@ -29,7 +29,7 @@ test ('ranges', function (t) {
     return +(acc || 0) + +item
   })
 
-  mapDb.post(console.log.bind(null, '  ?'))
+//  mapDb.post(console.log.bind(null, '---?'))
 
  var sums = {
     0: 0
@@ -44,11 +44,12 @@ test ('ranges', function (t) {
     
     pull(
       pl.read(mapDb, {range: r, tail: true}),
-      pull.through(console.log),
+      pull.through(console.log.bind(null, '>?>?>?>')),
       exactly(expected),
       pull.through(function (e) {
           var a = range.parse(e.key)
           t.equal(a.length, depth)
+          console.log(a, depth)
           console.log(a)
       }),
       pull.drain(console.log.bind(null, '>>>'), cb)
@@ -63,6 +64,7 @@ test ('ranges', function (t) {
     pl.write(db, function () {
 
        console.log('written')
+
        var n = 3
        checkRange(3, 100, function (err) {
           if(err) throw err
