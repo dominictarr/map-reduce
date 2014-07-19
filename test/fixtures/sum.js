@@ -1,26 +1,29 @@
-
-var levelup = require('level-test')()
-var rimraf  = require('rimraf')
-var pad     = require('pad')
+'use strict'
+var levelup  = require('level-test')()
+var rimraf   = require('rimraf')
+var pad      = require('pad')
+var sublevel = require('level-sublevel')
 
 function genSum (path, n, cb) {
-  rimraf(path, function () {
-    levelup(path, {createIfMissing: true}, function (err, db) {
+  console.log(path)
+  rimraf.sync(path)
+  var db = sublevel(levelup(path))
 
-      var l = n || 1e3, i = 0
-      var stream = db.writeStream(), total = 0
-      while(l--) {
-        stream.write({key: pad(6, ''+ ++i, '0'), value: JSON.stringify(i)})
-        total += i
-      }
-      stream.end()
-      if(cb) stream.on('close', function () {
-        console.log('TOTAL', total)
+  var l = n || 1e3, i = 0, N = n, total = 0
+  while(l--) {
+    db.put(
+      pad(6, ''+ ++i, '0'),
+      JSON.stringify(i),
+      next
+    )
+    total += i
+  }
+  function next () {
+    if(--N) return
+    if(cb) cb(null, db)
+  }
 
-        cb(null, db)
-      })
-    })
-  })
+  return db
 }
 
 if(!module.parent) {
