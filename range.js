@@ -17,8 +17,12 @@ module.exports = function (min, max, exports) {
 
   exports.range = function (array) {
     return {
-      min: exports.stringify(array.map(function(v) { if (v === true) return min; else return v})),
-      max: exports.stringify(array.map(function(v) { if (v === true) return max; else return v})),
+      min: exports.stringify(array.map(function(v) {
+        if (v === true) return min; else return v
+      })),
+      max: exports.stringify(array.map(function(v) {
+        if (v === true) return max; else return v
+      })),
     }
   }
 
