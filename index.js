@@ -1,10 +1,9 @@
 var Trigger = require('level-trigger')
 var range   = require('./range')
-var next
-if(typeof setImmediate == 'undefined')
-  next = process.nextTick
-else
-  next = setImmediate
+var next =
+  typeof setImmediate == 'undefined'
+  ? process.nextTick
+  :  setImmediate
 
 next = setTimeout
 
@@ -36,7 +35,7 @@ module.exports = function (db, mapDb, map, reduce, initial) {
             batch.push({key: range.stringify(array), value: value, type: 'put'})
             newKeys.push(range.stringify(array))
           })
-        
+
         async = true
 
         oldKeys.forEach(function (k) {
@@ -65,14 +64,16 @@ module.exports = function (db, mapDb, map, reduce, initial) {
       return JSON.stringify(a)
     },
     function (a, done) {
-      var array = JSON.parse(a)   
+      var array = JSON.parse(a)
       var acc = initial
       mapDb.createReadStream(range.range(array.concat(true)))
         .on('data', function (e) {
           try {
             acc = reduce(acc, e.value)
           } catch (err) {
-          console.error(err); return done(err); this.destroy() }
+            console.error(err);
+            return done(err)
+          }
         })
         .on('end', function () {
           var batch
@@ -95,7 +96,7 @@ module.exports = function (db, mapDb, map, reduce, initial) {
     return mapDb
   }
 
-  //patch streams so that they can handle 
+  //patch streams so that they can handle ranges.
 
   var createReadStream = mapDb.createReadStream
 
@@ -116,9 +117,8 @@ module.exports = function (db, mapDb, map, reduce, initial) {
     })
     return stream
   }
-  
+
   var oldGet = mapDb.get
-  
   mapDb.get = function(key){
     if(Array.isArray(key)) key = range.stringify(key)
     return oldGet.apply(this, arguments)
