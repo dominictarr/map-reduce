@@ -7,7 +7,7 @@ Incremental map-reduces and real-time results.
 ## Waat?
 
 An "incremental map reduce" means when you update one key,
-only a relevant protion of the data needs to be recalculated.
+only a relevant portion of the data needs to be recalculated.
 
 "real-time results" means that you can listen to the database,
 and recieve change notifications on the fly! a la 
